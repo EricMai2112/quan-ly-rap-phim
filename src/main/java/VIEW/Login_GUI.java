@@ -66,8 +66,10 @@ public class Login_GUI extends javax.swing.JFrame {
         jPanel1.setPreferredSize(new java.awt.Dimension(400, 500));
         jPanel1.setLayout(null);
 
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/hotel.png"))); // NOI18N
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/cinema.jpg"))); // NOI18N
         jLabel2.setText("jLabel2");
+        jLabel2.setAlignmentX(2.0F);
         jPanel1.add(jLabel2);
         jLabel2.setBounds(0, -10, 400, 540);
 
@@ -147,7 +149,7 @@ public class Login_GUI extends javax.swing.JFrame {
         });
         btnLogin.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                btnLoginKeyPressed(evt);
+                keyPressed(evt);
             }
         });
         jPanel2.add(btnLogin, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 360, 310, 50));
