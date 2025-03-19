@@ -186,32 +186,13 @@ public class Login_GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_iconEyeHideMouseClicked
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-//        // TODO add your handling code here:
-//        String tenDangNhap = txtUserName.getText();
-//        String matKhau = new String(txtPassword.getPassword());
-//        String matKhauMaHoa = MaHoa.toSHA1(matKhau);
-//          if (taiKhoanDAO.checkLogin(tenDangNhap, matKhauMaHoa)) {
-//        String maTaiKhoan = taiKhoanDAO.getTaiKhoanByTenDangNhap(tenDangNhap);
-//        String userRole;
-//        String userName = nhanVienDAO.getTenNhanVienByMaTaiKhoan(maTaiKhoan);
-//
-//        if (nhanVienDAO.isManager(maTaiKhoan)) {
-//            userRole = "NV_QUANLY"; // Quản lý
-//        } else {
-//            userRole = "NV_LETAN"; // Nhân viên
-//        }
-//
-//        // Mở trang chính và truyền vai trò vào Home_GUI
-//        Home_GUI home = new Home_GUI(userRole, userName);
-//        home.setVisible(true);
-//        maNhanVien = taiKhoanDAO.getMaNhanVienByTenDangNhap(tenDangNhap);
-//        this.dispose();  // Đóng cửa sổ login
-//        } else {
-//            JOptionPane.showMessageDialog(null, "Sai tên đăng nhập hoặc mật khẩu!");
-//            System.out.println(matKhauMaHoa);
-//        }
+        Home_GUI home = new Home_GUI();
+        home.setVisible(true);
 
-    }//GEN-LAST:event_btnLoginActionPerformed
+        this.dispose();  // Đóng cửa sổ login
+
+
+    }
 
     private void labelQuenMatKhauMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_labelQuenMatKhauMouseClicked
         // TODO add your handling code here:
