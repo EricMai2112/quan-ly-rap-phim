@@ -86,7 +86,7 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
         titleHoaDon.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        titleHoaDon.setText("Danh sách nhân viên");
+        titleHoaDon.setText("Danh sách khách hàng");
 
         tbNhanVien.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {},
@@ -111,7 +111,7 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         lbXoa.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lbXoa.setForeground(new java.awt.Color(255, 255, 255));
         lbXoa.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-
+        lbXoa.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/delete.png"))); // NOI18N
         lbXoa.setText("Xóa");
 
         javax.swing.GroupLayout btnXoaLayout = new javax.swing.GroupLayout(btnXoa);
@@ -136,7 +136,7 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         lbCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lbCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         lbCapNhat.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-
+        lbCapNhat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/fixing.png"))); // NOI18N
         lbCapNhat.setText("Cập nhật");
 
         javax.swing.GroupLayout btnCapNhatLayout = new javax.swing.GroupLayout(btnCapNhat);
@@ -159,7 +159,7 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         lbThemNhanVien.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lbThemNhanVien.setForeground(new java.awt.Color(255, 255, 255));
         lbThemNhanVien.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-  
+        lbThemNhanVien.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/add.png"))); // NOI18N
         lbThemNhanVien.setText("Thêm nhân viên");
 
         javax.swing.GroupLayout btnThemNhanvienLayout = new javax.swing.GroupLayout(btnThemNhanvien);
