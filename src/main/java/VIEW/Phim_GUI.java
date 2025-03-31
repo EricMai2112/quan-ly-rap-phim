@@ -44,6 +44,9 @@ import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.Phim_DAO;
+import MODEL.Phim;
+
 
 /**
  *
@@ -56,7 +59,7 @@ public class Phim_GUI extends javax.swing.JPanel {
 	public Phim_GUI() {
 		initComponents();
 		updateHeader();
-
+		loadPhimToTable();
 	}
 
 	/**
@@ -91,8 +94,7 @@ public class Phim_GUI extends javax.swing.JPanel {
         tbNhanVien.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {},
             new String [] {
-                "Mã nhân viên", "Tên nhân viên", "Loại", "Phái", "Ngày sinh", "Số điện thoại"
-            }
+                "Mã phim", "Tên phim", "Thời lượng", "Thể loại", "Trạng thái phim"}
         ) {
             Class[] types = new Class [] {
                 java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
@@ -215,154 +217,26 @@ public class Phim_GUI extends javax.swing.JPanel {
 		JTableHeader header = tbNhanVien.getTableHeader();
 		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
 	}
-
-
-
-	// Hàm kiểm tra tính hợp lệ của đầu vào
-	private boolean isInputValid(String tenNhanVien, String phai, Date ngaySinh, String cccd, String soDienThoai) {
-		if (tenNhanVien.isEmpty() || phai.isEmpty() || ngaySinh == null || cccd.isEmpty() || soDienThoai.isEmpty()) {
-			return false;
-		}
-		if (!soDienThoai.matches("\\d{10,11}")) { // Kiểm tra số điện thoại có đúng định dạng không (10-11 số)
-			JOptionPane.showMessageDialog(null, "Số điện thoại phải có từ 10 đến 11 chữ số.", "Thông báo",
-					JOptionPane.WARNING_MESSAGE);
-			return false;
-		}
-		if (!cccd.matches("\\d{12}")) { // Kiểm tra CCCD có đúng định dạng 12 chữ số không
-			JOptionPane.showMessageDialog(null, "Số CCCD phải có đúng 12 chữ số.", "Thông báo",
-					JOptionPane.WARNING_MESSAGE);
-			return false;
-		}
-		return true;
+	
+	private void loadPhimToTable() {
+	    Phim_DAO phimDAO = new Phim_DAO(); // Giả sử bạn có DAO này
+	    List<Phim> listPhim = phimDAO.getAllPhim();
+	    
+	    DefaultTableModel model = (DefaultTableModel) tbNhanVien.getModel();
+	    model.setRowCount(0); // Xóa dữ liệu cũ trước khi thêm mới
+	    
+	    for (Phim phim : listPhim) {
+	        Object[] row = {
+	            phim.getMaPhim(),
+	            phim.getTenPhim(),
+	            phim.getThoiLuong(),
+	            phim.getTheLoai(),
+	            phim.getTrangThaiPhim().toString()
+	        };
+	        model.addRow(row);
+	    }
 	}
 
-	private boolean isInputValid(String tenNhanVien, String phai, Date ngaySinh, String soDienThoai) {
-		return !tenNhanVien.isEmpty() && !phai.isEmpty() && ngaySinh != null && !soDienThoai.isEmpty();
-	}
-
-	private java.sql.Date parseDate(String dateString) throws java.text.ParseException {
-		java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd/MM/yyyy");
-		Date date = dateFormat.parse(dateString);
-		return new java.sql.Date(date.getTime());
-	}
-
-	private javax.swing.JTextField createTextField(String text, boolean editable) {
-		javax.swing.JTextField textField = new javax.swing.JTextField(text, 20);
-		textField.setEditable(editable);
-		return textField;
-	}
-
-
-	private void addComponent(javax.swing.JPanel panel, java.awt.GridBagConstraints gbc, int gridX, int gridY,
-			String labelText, javax.swing.JComponent component) {
-		gbc.gridx = gridX;
-		gbc.gridy = gridY;
-		panel.add(new javax.swing.JLabel(labelText), gbc);
-		gbc.gridx = gridX + 1;
-		panel.add(component, gbc);
-	}
-
-	private javax.swing.JPanel createButtonPanel(javax.swing.JButton btnCancel, javax.swing.JButton btnSave) {
-		javax.swing.JPanel buttonPanel = new javax.swing.JPanel();
-		buttonPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
-		buttonPanel.add(btnCancel);
-		buttonPanel.add(btnSave);
-		return buttonPanel;
-	}
-
-
-
-	// Helper method to add components in formPanel
-	private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String labelText, Component component) {
-		gbc.gridx = 0;
-		gbc.gridy = row;
-		panel.add(new JLabel(labelText), gbc);
-
-		gbc.gridx = 1;
-		panel.add(component, gbc);
-	}
-
-	private boolean saveTaiKhoanData(JDialog dialog, JTextField txtTenDangNhap, JTextField txtMatKhau,
-			JTextField txtEmail) {
-		String tenDangNhap = txtTenDangNhap.getText().trim();
-		String matKhau = txtMatKhau.getText().trim();
-		String email = txtEmail.getText().trim();
-
-// Kiểm tra tên đăng nhập
-		if (tenDangNhap.isEmpty()) {
-			JOptionPane.showMessageDialog(dialog, "Tên đăng nhập không được để trống. Vui lòng nhập tên đăng nhập!",
-					"Lỗi", JOptionPane.ERROR_MESSAGE);
-			txtTenDangNhap.requestFocus();
-			return false;
-		}
-
-		if (tenDangNhap.length() < 5) {
-			JOptionPane.showMessageDialog(dialog, "Tên đăng nhập phải có ít nhất 5 ký tự!", "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
-			txtTenDangNhap.requestFocus();
-			return false;
-		}
-
-// Kiểm tra mật khẩu
-		if (matKhau.isEmpty()) {
-			JOptionPane.showMessageDialog(dialog, "Mật khẩu không được để trống. Vui lòng nhập mật khẩu!", "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
-			txtMatKhau.requestFocus();
-			return false;
-		}
-
-		if (matKhau.length() < 6) {
-			JOptionPane.showMessageDialog(dialog, "Mật khẩu phải có ít nhất 6 ký tự để đảm bảo bảo mật!", "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
-			txtMatKhau.requestFocus();
-			return false;
-		}
-
-// Kiểm tra email
-		if (email.isEmpty()) {
-			JOptionPane.showMessageDialog(dialog, "Email không được để trống. Vui lòng nhập email!", "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
-			txtEmail.requestFocus();
-			return false;
-		}
-
-// Chấp nhận nhiều nhà cung cấp email, không giới hạn chỉ Gmail
-		String emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
-		if (!email.matches(emailPattern)) {
-			JOptionPane.showMessageDialog(dialog, "Email không hợp lệ. Vui lòng nhập email đúng định dạng!", "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
-			txtEmail.requestFocus();
-			return false;
-		}
-
-// Nếu tất cả điều kiện hợp lệ, trả về true
-		JOptionPane.showMessageDialog(dialog, "Thông tin tài khoản hợp lệ và đã được lưu thành công!", "Thành công",
-				JOptionPane.INFORMATION_MESSAGE);
-		return true;
-	}
-
-	private static class NumericDocumentFilter extends DocumentFilter {
-		@Override
-		public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
-				throws BadLocationException {
-			if (string != null && string.matches("\\d*")) { // Check if input is numeric
-				super.insertString(fb, offset, string, attr);
-			}
-		}
-
-		@Override
-		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException {
-			if (text != null && text.matches("\\d*")) { // Check if input is numeric
-				super.replace(fb, offset, length, text, attrs);
-			}
-		}
-
-		@Override
-		public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
-			super.remove(fb, offset, length);
-		}
-	}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel btnCapNhat;

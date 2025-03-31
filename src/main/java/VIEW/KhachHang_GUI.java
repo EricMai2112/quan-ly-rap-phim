@@ -135,7 +135,6 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         lbCapNhat.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lbCapNhat.setForeground(new java.awt.Color(255, 255, 255));
         lbCapNhat.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-
         lbCapNhat.setText("Cập nhật");
 
         javax.swing.GroupLayout btnCapNhatLayout = new javax.swing.GroupLayout(btnCapNhat);
@@ -158,8 +157,7 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         lbThemNhanVien.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lbThemNhanVien.setForeground(new java.awt.Color(255, 255, 255));
         lbThemNhanVien.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-
-        lbThemNhanVien.setText("Thêm nhân viên");
+        lbThemNhanVien.setText("Thêm khách hàng");
 
         javax.swing.GroupLayout btnThemNhanvienLayout = new javax.swing.GroupLayout(btnThemNhanvien);
         btnThemNhanvien.setLayout(btnThemNhanvienLayout);

@@ -9,6 +9,9 @@ public class Phim {
 	private String theLoai;
 	private TrangThaiPhim trangThaiPhim;
 	
+	public Phim() {
+		
+	}
 	
 	public Phim(String maPhim, String tenPhim, int thoiLuong, String theLoai, TrangThaiPhim trangThaiPhim) {
 		super();
