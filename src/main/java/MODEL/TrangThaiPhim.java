@@ -2,7 +2,7 @@ package MODEL;
 
 public enum TrangThaiPhim {
 
-    DANG_CHIEU("Phim dang duoc chieu"), SAP_CHIEU("Phim sap chieu"), HET_CHIEU("Phim da het chieu");
+    DANG_CHIEU("Đang chiếu"), SAP_CHIEU("Sắp chiếu"), HET_CHIEU("Hết chiếu");
     
     private String trangThaiPhim;
     

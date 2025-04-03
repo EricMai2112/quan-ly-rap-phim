@@ -8,20 +8,27 @@ public class Phim {
 	private int thoiLuong;
 	private String theLoai;
 	private TrangThaiPhim trangThaiPhim;
+	 private String hinhAnh;
 	
 	public Phim() {
 		
 	}
 	
-	public Phim(String maPhim, String tenPhim, int thoiLuong, String theLoai, TrangThaiPhim trangThaiPhim) {
+	
+	
+	public Phim(String maPhim, String tenPhim, int thoiLuong, String theLoai, TrangThaiPhim trangThaiPhim,
+			String hinhAnh) {
 		super();
 		this.maPhim = maPhim;
 		this.tenPhim = tenPhim;
 		this.thoiLuong = thoiLuong;
 		this.theLoai = theLoai;
 		this.trangThaiPhim = trangThaiPhim;
+		this.hinhAnh = hinhAnh;
 	}
-	
+
+
+
 	public String getMaPhim() {
 		return maPhim;
 	}
@@ -54,6 +61,19 @@ public class Phim {
 	public void setTrangThaiPhim(TrangThaiPhim trangThaiPhim) {
 		this.trangThaiPhim = trangThaiPhim;
 	}
+	
+
+	public String getHinhAnh() {
+		return hinhAnh;
+	}
+
+
+
+	public void setHinhAnh(String hinhAnh) {
+		this.hinhAnh = hinhAnh;
+	}
+
+
 
 	@Override
 	public int hashCode() {
@@ -71,11 +91,15 @@ public class Phim {
 		return Objects.equals(maPhim, other.maPhim);
 	}
 
+
+
 	@Override
 	public String toString() {
 		return "Phim [maPhim=" + maPhim + ", tenPhim=" + tenPhim + ", thoiLuong=" + thoiLuong + ", theLoai=" + theLoai
-				+ ", trangThaiPhim=" + trangThaiPhim + "]";
+				+ ", trangThaiPhim=" + trangThaiPhim + ", hinhAnh=" + hinhAnh + "]";
 	}
+
+
 	
 	
 	

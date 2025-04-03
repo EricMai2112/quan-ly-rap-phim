@@ -175,39 +175,54 @@ public class BanVe_GUI extends javax.swing.JPanel {
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
         card.setPreferredSize(new Dimension(200, 300));
+
+        // Lấy hình ảnh từ phim
+        String hinhAnh = phim.getHinhAnh(); // Giả sử có phương thức getHinhAnh()
+        JLabel imageLabel;
         
-        // Phần hình ảnh (có thể thay bằng hình ảnh thực tế từ CSDL)
-        JLabel imageLabel = new JLabel(new ImageIcon("path/to/default/movie/image.png"));
+        try {
+            if (hinhAnh != null && !hinhAnh.trim().isEmpty()) {
+                imageLabel = new JLabel(new ImageIcon(new java.net.URL(hinhAnh)));
+            } else {
+                imageLabel = new JLabel(new ImageIcon("path/to/default/movie/image.png"));
+            }
+        } catch (Exception e) {
+            imageLabel = new JLabel(new ImageIcon("path/to/default/movie/image.png"));
+        }
+
         imageLabel.setHorizontalAlignment(JLabel.CENTER);
         card.add(imageLabel, BorderLayout.CENTER);
-        
+
         // Phần thông tin phim
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
         infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         JLabel titleLabel = new JLabel(phim.getTenPhim());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        
+
         JLabel genreLabel = new JLabel("Thể loại: " + phim.getTheLoai());
         genreLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        
+
         JLabel durationLabel = new JLabel("Thời lượng: " + phim.getThoiLuong() + " phút");
         durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         
-        JLabel statusLabel = new JLabel("Trạng thái: " + phim.getTrangThaiPhim().toString());
+        JPanel pStatus = new JPanel();
+
+        JLabel statusLabel = new JLabel("Trạng thái: " + phim.getTrangThaiPhim());
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        
+
         infoPanel.add(titleLabel);
         infoPanel.add(genreLabel);
         infoPanel.add(durationLabel);
         infoPanel.add(statusLabel);
-        
+
         card.add(infoPanel, BorderLayout.SOUTH);
-        
+
         return card;
     }
+
 
     
     

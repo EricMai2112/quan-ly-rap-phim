@@ -14,33 +14,57 @@ import MODEL.TrangThaiPhim;
 public class Phim_DAO {
 	private final ConnectDB connectDB = new ConnectDB();
 	
-	    // Lấy danh sách tất cả phim
-	    public List<Phim> getAllPhim() {
-	        List<Phim> listPhim = new ArrayList<>();
-	        String sql = "SELECT maPhim, tenPhim, thoiLuong, theLoai, trangThaiPhim FROM Phim";
-	        
-	        try (Connection conn = connectDB.getConnection();
-	                Statement stmt = conn.createStatement();
-	                ResultSet resultSet = stmt.executeQuery(sql))  {
-	            
-	            while (resultSet.next()) {
-	                Phim phim = new Phim();
-	                phim.setMaPhim(resultSet.getString("maPhim"));
-	                phim.setTenPhim(resultSet.getString("tenPhim"));
-	                phim.setThoiLuong(resultSet.getInt("thoiLuong"));
-	                phim.setTheLoai(resultSet.getString("theLoai"));
-	                
-	                // Xử lý trạng thái phim
-	                String trangThaiStr = resultSet.getString("trangThaiPhim");
-	                TrangThaiPhim trangThai = TrangThaiPhim.valueOf(trangThaiStr);
-	                phim.setTrangThaiPhim(trangThai);
-	                
-	                listPhim.add(phim);
-	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
+	public List<Phim> getAllPhim() {
+	    List<Phim> listPhim = new ArrayList<>();
+	    String sql = "SELECT maPhim, tenPhim, thoiLuong, theLoai, trangThaiPhim, hinhAnh FROM Phim";
+
+	    try (Connection conn = connectDB.getConnection();
+	         Statement stmt = conn.createStatement();
+	         ResultSet resultSet = stmt.executeQuery(sql)) {
+
+	        while (resultSet.next()) {
+	            Phim phim = new Phim();
+	            phim.setMaPhim(resultSet.getString("maPhim"));
+	            phim.setTenPhim(resultSet.getString("tenPhim"));
+	            phim.setThoiLuong(resultSet.getInt("thoiLuong"));
+	            phim.setTheLoai(resultSet.getString("theLoai"));
+
+	            // Xử lý trạng thái phim
+	            String trangThaiStr = resultSet.getString("trangThaiPhim");
+	            TrangThaiPhim trangThai = TrangThaiPhim.valueOf(trangThaiStr);
+	            phim.setTrangThaiPhim(trangThai);
+
+	            // Lấy link ảnh
+	            phim.setHinhAnh(resultSet.getString("hinhAnh"));
+
+	            listPhim.add(phim);
 	        }
-	        
-	        return listPhim;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
 	    }
+
+	    return listPhim;
+	}
+	
+	public boolean addPhim(Phim phim) {
+	    String sql = "INSERT INTO Phim (maPhim, tenPhim, thoiLuong, theLoai, trangThaiPhim, hinhAnh) VALUES (?, ?, ?, ?, ?, ?)";
+
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	        stmt.setString(1, phim.getMaPhim());
+	        stmt.setString(2, phim.getTenPhim());
+	        stmt.setInt(3, phim.getThoiLuong());
+	        stmt.setString(4, phim.getTheLoai());
+	        stmt.setString(5, phim.getTrangThaiPhim().name());
+	        stmt.setString(6, phim.getHinhAnh()); // Lưu link ảnh
+
+	        return stmt.executeUpdate() > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false;
+	}
+
+
 }

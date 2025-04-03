@@ -10,6 +10,7 @@ import javax.swing.text.DocumentFilter.FilterBypass;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -46,6 +47,7 @@ import com.toedter.calendar.JDateChooser;
 
 import CONTROL.Phim_DAO;
 import MODEL.Phim;
+import MODEL.TrangThaiPhim;
 
 
 /**
@@ -77,11 +79,11 @@ public class Phim_GUI extends javax.swing.JPanel {
         titlePhim = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbNhanVien = new javax.swing.JTable();
-        btnXoa = new javax.swing.JPanel();
+        btnXoa = new RoundedPanel(20);
         lbXoa = new javax.swing.JLabel();
-        btnCapNhat = new javax.swing.JPanel();
+        btnCapNhat = new RoundedPanel(20);
         lbCapNhat = new javax.swing.JLabel();
-        btnThemPhim = new javax.swing.JPanel();
+        btnThemPhim = new RoundedPanel(20);
         lbThemPhim = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout());
@@ -115,6 +117,7 @@ public class Phim_GUI extends javax.swing.JPanel {
         lbXoa.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lbXoa.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/delete.png"))); // NOI18N
         lbXoa.setText("Xóa");
+        
 
         javax.swing.GroupLayout btnXoaLayout = new javax.swing.GroupLayout(btnXoa);
         btnXoa.setLayout(btnXoaLayout);
@@ -211,6 +214,14 @@ public class Phim_GUI extends javax.swing.JPanel {
         );
 
         add(jPanel1, "card2");
+        
+        btnThemPhim.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showAddPhimDialog();
+            }
+        });
+
     }// </editor-fold>//GEN-END:initComponents
 
 	private void updateHeader() {
@@ -219,11 +230,11 @@ public class Phim_GUI extends javax.swing.JPanel {
 	}
 	
 	private void loadPhimToTable() {
-	    Phim_DAO phimDAO = new Phim_DAO(); // Giả sử bạn có DAO này
+	    Phim_DAO phimDAO = new Phim_DAO();
 	    List<Phim> listPhim = phimDAO.getAllPhim();
 	    
 	    DefaultTableModel model = (DefaultTableModel) tbNhanVien.getModel();
-	    model.setRowCount(0); // Xóa dữ liệu cũ trước khi thêm mới
+	    model.setRowCount(0);
 	    
 	    for (Phim phim : listPhim) {
 	        Object[] row = {
@@ -236,6 +247,97 @@ public class Phim_GUI extends javax.swing.JPanel {
 	        model.addRow(row);
 	    }
 	}
+	
+	private void showAddPhimDialog() {
+	    final JDialog addDialog = new JDialog((Frame) null, "Thêm Phim", true);
+	    addDialog.setSize(400, 350);
+	    addDialog.setLayout(new GridBagLayout());
+	    addDialog.setLocationRelativeTo(null);
+
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.insets = new Insets(5, 5, 5, 5);
+	    gbc.anchor = GridBagConstraints.WEST;
+
+	    JLabel lblMaPhim = new JLabel("Mã Phim:");
+	    JLabel lblTenPhim = new JLabel("Tên Phim:");
+	    JLabel lblThoiLuong = new JLabel("Thời Lượng:");
+	    JLabel lblTheLoai = new JLabel("Thể Loại:");
+	    JLabel lblTrangThai = new JLabel("Trạng Thái:");
+	    JLabel lblHinhAnh = new JLabel("Hình Ảnh:");
+	    
+	    lblMaPhim.setFont(new Font("Time new Romans", Font.BOLD, 15));
+	    lblTenPhim.setFont(new Font("Time new Romans", Font.BOLD, 15));
+	    lblThoiLuong.setFont(new Font("Time new Romans", Font.BOLD, 15));
+	    lblTheLoai.setFont(new Font("Time new Romans", Font.BOLD, 15));
+	    lblTrangThai.setFont(new Font("Time new Romans", Font.BOLD, 15));
+	    lblHinhAnh.setFont(new Font("Time new Romans", Font.BOLD, 15));
+
+	    JTextField txtMaPhim = new JTextField(20);
+	    JTextField txtTenPhim = new JTextField(20);
+	    JTextField txtThoiLuong = new JTextField(20);
+	    JTextField txtTheLoai = new JTextField(20);
+	    
+	    JComboBox<TrangThaiPhim> cbTrangThai = new JComboBox<>(TrangThaiPhim.values());
+
+	    JTextField txtHinhAnh = new JTextField(20);
+
+	    JButton btnXacNhan = new JButton("Xác Nhận");
+	    btnXacNhan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnXacNhan.setBackground(new java.awt.Color(25, 159, 254));
+	    btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
+	    btnXacNhan.setFont(new Font("Time new Romans", Font.BOLD, 15));
+	    JButton btnHuy = new JButton("Hủy");
+	    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+	    btnHuy.setBackground(new java.awt.Color(255, 0, 0));
+	    btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+	    btnHuy.setFont(new Font("Time new Romans", Font.BOLD, 15));
+
+	    gbc.gridx = 0; gbc.gridy = 0; addDialog.add(lblMaPhim, gbc);
+	    gbc.gridx = 1; addDialog.add(txtMaPhim, gbc);
+	    gbc.gridx = 0; gbc.gridy = 1; addDialog.add(lblTenPhim, gbc);
+	    gbc.gridx = 1; addDialog.add(txtTenPhim, gbc);
+	    gbc.gridx = 0; gbc.gridy = 2; addDialog.add(lblThoiLuong, gbc);
+	    gbc.gridx = 1; addDialog.add(txtThoiLuong, gbc);
+	    gbc.gridx = 0; gbc.gridy = 3; addDialog.add(lblTheLoai, gbc);
+	    gbc.gridx = 1; addDialog.add(txtTheLoai, gbc);
+	    gbc.gridx = 0; gbc.gridy = 4; addDialog.add(lblTrangThai, gbc);
+	    gbc.gridx = 1; addDialog.add(cbTrangThai, gbc);
+	    gbc.gridx = 0; gbc.gridy = 5; addDialog.add(lblHinhAnh, gbc);
+	    gbc.gridx = 1; addDialog.add(txtHinhAnh, gbc);
+
+	    gbc.gridx = 0; gbc.gridy = 6; addDialog.add(btnXacNhan, gbc);
+	    gbc.gridx = 1; addDialog.add(btnHuy, gbc);
+
+	    btnXacNhan.addActionListener(e -> {
+	        try {
+	            String maPhim = txtMaPhim.getText().trim();
+	            String tenPhim = txtTenPhim.getText().trim();
+	            int thoiLuong = Integer.parseInt(txtThoiLuong.getText().trim());
+	            String theLoai = txtTheLoai.getText().trim();
+	            TrangThaiPhim trangThai = (TrangThaiPhim) cbTrangThai.getSelectedItem();
+	            String hinhAnh = txtHinhAnh.getText().trim();
+
+	            Phim phim = new Phim(maPhim, tenPhim, thoiLuong, theLoai, trangThai, hinhAnh);
+	            Phim_DAO phimDAO = new Phim_DAO();
+
+	            if (phimDAO.addPhim(phim)) {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm phim thành công!");
+	                loadPhimToTable();
+	                addDialog.dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm phim thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (NumberFormatException ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Thời lượng phải là số nguyên!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        }
+	    });
+
+	    btnHuy.addActionListener(e -> addDialog.dispose());
+
+	    addDialog.setVisible(true);
+	}
+
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
