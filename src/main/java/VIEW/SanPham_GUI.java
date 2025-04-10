@@ -6,12 +6,17 @@ package VIEW;
 
 import javax.swing.text.*;
 
+import CONTROL.SanPhamDichVu_DAO;
+import MODEL.SanPham;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -19,6 +24,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,6 +39,8 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
@@ -50,6 +59,7 @@ public class SanPham_GUI extends javax.swing.JPanel {
 	public SanPham_GUI() {
 		initComponents();
 		updateHeader();
+		loadSanPhamToTable();
 	}
 
 	/**
@@ -62,19 +72,27 @@ public class SanPham_GUI extends javax.swing.JPanel {
 	// <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+		
+		
 
         jPanel2 = new javax.swing.JPanel();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel5 = new javax.swing.JLabel();
-        btnXoa = new javax.swing.JPanel();
+        btnXoa = new RoundedPanel(20);
         lbXoa = new javax.swing.JLabel();
-        btnCapNhat = new javax.swing.JPanel();
+        btnCapNhat = new RoundedPanel(20);
         lbCapNhat = new javax.swing.JLabel();
-        btnThemDichVu = new javax.swing.JPanel();
+        btnThemDichVu = new RoundedPanel(20);
         lbThemDichVu = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
 
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tbSanPham = new javax.swing.JTable();
+
+        String[] columns = {"Mã sản phẩm", "Tên sản phẩm", "Danh mục", "Giá tiền", "Số lượng"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        tbSanPham = new JTable(model);
+        jScrollPane1.setViewportView(tbSanPham);
+        
         setLayout(new java.awt.CardLayout());
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
@@ -162,8 +180,8 @@ public class SanPham_GUI extends javax.swing.JPanel {
 
         jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
-        jTable1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tbSanPham.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        tbSanPham.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, "", "", null, null},
                 {null, null, null, null, null},
@@ -173,7 +191,7 @@ public class SanPham_GUI extends javax.swing.JPanel {
                 {null, null, null, null, null}
             },
             new String [] {
-                "Mã sản phẩm", "Tên sản phẩm", "Đơn vị tính", "Số lượng", "Đơn giá"
+                "Mã sản phẩm", "Tên sản phẩm", "Đơn vị tính", "Đơn giá", "Số lượng"
             }
         ) {
             Class[] types = new Class [] {
@@ -184,8 +202,8 @@ public class SanPham_GUI extends javax.swing.JPanel {
                 return types [columnIndex];
             }
         });
-        jTable1.setRowHeight(40);
-        jScrollPane1.setViewportView(jTable1);
+        tbSanPham.setRowHeight(40);
+        jScrollPane1.setViewportView(tbSanPham);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -220,17 +238,289 @@ public class SanPham_GUI extends javax.swing.JPanel {
         );
 
         add(jPanel2, "card2");
+        btnThemDichVu.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		showAddSanPhamDialog();
+        	}
+        });
+        
+        btnCapNhat.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		int selectRow = tbSanPham.getSelectedRow();
+        		if (selectRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn sản phẩm cần cập nhật!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+        		String maSanPham = tbSanPham.getValueAt(selectRow, 0).toString();
+
+                // Lấy sản phẩm từ database thông qua DAO
+                SanPhamDichVu_DAO dao = new SanPhamDichVu_DAO();
+                SanPham sanPham = dao.getSanPhamByMa(maSanPham);
+
+                if (sanPham == null) {
+                    JOptionPane.showMessageDialog(null, "Không tìm thấy sản phẩm để cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Gọi phương thức hiển thị dialog cập nhật
+                showUpdateSanPhamDialog(sanPham);
+        	}
+        });
+        
+        
     }// </editor-fold>//GEN-END:initComponents
 
 	private void updateHeader() {
-		JTableHeader header = jTable1.getTableHeader();
+		JTableHeader header = tbSanPham.getTableHeader();
 		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
 
 	}
 
+
 	// Hàm đổ dữ liệu từ database vào JTable cho DichVu
 	
+	public void loadSanPhamToTable() {
+	    SanPhamDichVu_DAO sanPhamDao = new SanPhamDichVu_DAO();
+	    List<SanPham> listSanPham;
+	    try {
+	        listSanPham = sanPhamDao.getAllSanPham();
+	    } catch (Exception e) {
+	        // Không hiển thị thông báo, chỉ trả về nếu có lỗi
+	        return;
+	    }
 
+	    DefaultTableModel model;
+	    try {
+	        model = (DefaultTableModel) tbSanPham.getModel();
+	        model.setRowCount(0); // Xóa toàn bộ dòng hiện có
+	    } catch (Exception e) {
+	        // Không hiển thị thông báo, chỉ trả về nếu có lỗix
+	        return;
+	    }
+	    // Thêm dữ liệu mới vào bảng
+	    for (SanPham sanPham : listSanPham) {
+	        Object[] row = {
+	            sanPham.getMaSanPham(),
+	            sanPham.getTenSanPham(),
+	            sanPham.getDanhMuc(),
+	            sanPham.getGiaTien(),
+	            sanPham.getSoLuong()
+	        };
+	        model.addRow(row);
+	    }
+	}
+	private void showAddSanPhamDialog() {
+	    final JDialog addDialog = new JDialog(new JDialog((Frame) null, "Thêm dịch vụ", true));
+	    addDialog.setSize(400, 300); // Giảm kích thước vì ít trường hơn
+	    addDialog.setLayout(new GridBagLayout());
+	    addDialog.setLocationRelativeTo(null);
+
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.insets = new Insets(5, 5, 5, 5);
+	    gbc.anchor = GridBagConstraints.WEST;
+
+	    // Tạo các nhãn và trường nhập liệu cho sản phẩm
+	    JLabel lblMaSanPham = new JLabel("Mã Sản Phẩm:");
+	    JLabel lblTenSanPham = new JLabel("Tên Sản Phẩm:");
+	    JLabel lblDanhMuc = new JLabel("Danh Mục:");
+	    JLabel lblGiaTien = new JLabel("Giá Tiền:");
+	    JLabel lblSoLuong = new JLabel("Số Lượng:");
+
+	    // Định dạng font cho nhãn
+	    lblMaSanPham.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblTenSanPham.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblDanhMuc.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblGiaTien.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblSoLuong.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    // Tạo các trường nhập liệu
+	    JTextField txtMaSanPham = new JTextField(20);
+	    JTextField txtTenSanPham = new JTextField(20);
+	    JTextField txtDanhMuc = new JTextField(20);
+	    JTextField txtGiaTien = new JTextField(20);
+	    JTextField txtSoLuong = new JTextField(20);
+
+	    // Tạo các nút
+	    JButton btnXacNhan = new JButton("Xác Nhận");
+	    btnXacNhan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnXacNhan.setBackground(new java.awt.Color(25, 159, 254));
+	    btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
+	    btnXacNhan.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    JButton btnHuy = new JButton("Hủy");
+	    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnHuy.setBackground(new java.awt.Color(255, 0, 0));
+	    btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+	    btnHuy.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    // Đặt vị trí các thành phần trên dialog
+	    gbc.gridx = 0; gbc.gridy = 0; addDialog.add(lblMaSanPham, gbc);
+	    gbc.gridx = 1; addDialog.add(txtMaSanPham, gbc);
+	    gbc.gridx = 0; gbc.gridy = 1; addDialog.add(lblTenSanPham, gbc);
+	    gbc.gridx = 1; addDialog.add(txtTenSanPham, gbc);
+	    gbc.gridx = 0; gbc.gridy = 2; addDialog.add(lblDanhMuc, gbc);
+	    gbc.gridx = 1; addDialog.add(txtDanhMuc, gbc);
+	    gbc.gridx = 0; gbc.gridy = 3; addDialog.add(lblGiaTien, gbc);
+	    gbc.gridx = 1; addDialog.add(txtGiaTien, gbc);
+	    gbc.gridx = 0; gbc.gridy = 4; addDialog.add(lblSoLuong, gbc);
+	    gbc.gridx = 1; addDialog.add(txtSoLuong, gbc);
+
+	    gbc.gridx = 0; gbc.gridy = 5; addDialog.add(btnXacNhan, gbc);
+	    gbc.gridx = 1; addDialog.add(btnHuy, gbc);
+
+	    // Xử lý sự kiện nút "Xác Nhận"
+	    btnXacNhan.addActionListener(e -> {
+	        try {
+	            String maSanPham = txtMaSanPham.getText().trim();
+	            String tenSanPham = txtTenSanPham.getText().trim();
+	            String danhMuc = txtDanhMuc.getText().trim();
+	            double giaTien = Double.parseDouble(txtGiaTien.getText().trim());
+	            int soLuong = Integer.parseInt(txtSoLuong.getText().trim());
+
+	            // Kiểm tra dữ liệu nhập
+	            if (maSanPham.isEmpty() || tenSanPham.isEmpty() || danhMuc.isEmpty()) {
+	                JOptionPane.showMessageDialog(addDialog, "Vui lòng nhập đầy đủ thông tin!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	                return;
+	            }
+	            if (giaTien <= 0 || soLuong < 0) {
+	                JOptionPane.showMessageDialog(addDialog, "Giá tiền phải lớn hơn 0 và số lượng không được âm!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	                return;
+	            }
+
+	            // Tạo đối tượng SanPham
+	            SanPham sanPham = new SanPham(maSanPham, tenSanPham, danhMuc, giaTien, soLuong);
+	            SanPhamDichVu_DAO sanPhamDAO = new SanPhamDichVu_DAO();
+
+	            // Thêm sản phẩm vào cơ sở dữ liệu
+	            if (sanPhamDAO.addSPham(sanPham)) {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm sản phẩm thành công!");
+	                loadSanPhamToTable(); // Làm mới bảng sau khi thêm
+	                addDialog.dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm sản phẩm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (NumberFormatException ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Giá tiền và số lượng phải là số hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        } catch (Exception ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            ex.printStackTrace();
+	        }
+	    });
+
+	    // Xử lý sự kiện nút "Hủy"
+	    btnHuy.addActionListener(e -> addDialog.dispose());
+
+	    addDialog.setVisible(true);
+	}
+	private void showUpdateSanPhamDialog(SanPham sanPhamUpdate) {
+	    final JDialog updateDialog = new JDialog(new JDialog((Frame) null, "Cập nhật dịch vụ", true));
+	    updateDialog.setSize(400, 300);
+	    updateDialog.setLayout(new GridBagLayout());
+	    updateDialog.setLocationRelativeTo(null);
+
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.insets = new Insets(5, 5, 5, 5);
+	    gbc.anchor = GridBagConstraints.WEST;
+
+	    JLabel lblMaSanPham = new JLabel("Mã Sản Phẩm:");
+	    JLabel lblTenSanPham = new JLabel("Tên Sản Phẩm:");
+	    JLabel lblDanhMuc = new JLabel("Danh Mục:");
+	    JLabel lblGiaTien = new JLabel("Giá Tiền:");
+	    JLabel lblSoLuong = new JLabel("Số Lượng:");
+
+	    lblMaSanPham.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblTenSanPham.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblDanhMuc.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblGiaTien.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblSoLuong.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    JTextField txtMaSanPham = new JTextField(20);
+	    txtMaSanPham.setText(sanPhamUpdate.getMaSanPham());
+	    txtMaSanPham.setEditable(false); // không cho sửa mã
+
+	    JTextField txtTenSanPham = new JTextField(20);
+	    txtTenSanPham.setText(sanPhamUpdate.getTenSanPham());
+
+	    JTextField txtDanhMuc = new JTextField(20);
+	    txtDanhMuc.setText(sanPhamUpdate.getDanhMuc());
+
+	    JTextField txtGiaTien = new JTextField(20);
+	    txtGiaTien.setText(String.valueOf(sanPhamUpdate.getGiaTien()));
+
+	    JTextField txtSoLuong = new JTextField(20);
+	    txtSoLuong.setText(String.valueOf(sanPhamUpdate.getSoLuong()));
+
+	    JButton btnCapNhat = new JButton("Cập Nhật");
+	    btnCapNhat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnCapNhat.setBackground(new java.awt.Color(25, 159, 254));
+	    btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
+	    btnCapNhat.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    JButton btnHuy = new JButton("Hủy");
+	    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnHuy.setBackground(new java.awt.Color(255, 0, 0));
+	    btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+	    btnHuy.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    gbc.gridx = 0; gbc.gridy = 0; updateDialog.add(lblMaSanPham, gbc);
+	    gbc.gridx = 1; updateDialog.add(txtMaSanPham, gbc);
+	    gbc.gridx = 0; gbc.gridy = 1; updateDialog.add(lblTenSanPham, gbc);
+	    gbc.gridx = 1; updateDialog.add(txtTenSanPham, gbc);
+	    gbc.gridx = 0; gbc.gridy = 2; updateDialog.add(lblDanhMuc, gbc);
+	    gbc.gridx = 1; updateDialog.add(txtDanhMuc, gbc);
+	    gbc.gridx = 0; gbc.gridy = 3; updateDialog.add(lblGiaTien, gbc);
+	    gbc.gridx = 1; updateDialog.add(txtGiaTien, gbc);
+	    gbc.gridx = 0; gbc.gridy = 4; updateDialog.add(lblSoLuong, gbc);
+	    gbc.gridx = 1; updateDialog.add(txtSoLuong, gbc);
+
+	    gbc.gridx = 0; gbc.gridy = 5; updateDialog.add(btnCapNhat, gbc);
+	    gbc.gridx = 1; updateDialog.add(btnHuy, gbc);
+
+	    btnCapNhat.addActionListener(e -> {
+	        try {
+	            String tenSanPham = txtTenSanPham.getText().trim();
+	            String danhMuc = txtDanhMuc.getText().trim();
+	            double giaTien = Double.parseDouble(txtGiaTien.getText().trim());
+	            int soLuong = Integer.parseInt(txtSoLuong.getText().trim());
+
+	            if (tenSanPham.isEmpty() || danhMuc.isEmpty()) {
+	                JOptionPane.showMessageDialog(updateDialog, "Vui lòng nhập đầy đủ thông tin!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	                return;
+	            }
+	            if (giaTien <= 0 || soLuong < 0) {
+	                JOptionPane.showMessageDialog(updateDialog, "Giá tiền phải lớn hơn 0 và số lượng không được âm!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	                return;
+	            }
+
+	            // Cập nhật dữ liệu
+	            sanPhamUpdate.setTenSanPham(tenSanPham);
+	            sanPhamUpdate.setDanhMuc(danhMuc);
+	            sanPhamUpdate.setGiaTien(giaTien);
+	            sanPhamUpdate.setSoLuong(soLuong);
+
+	            SanPhamDichVu_DAO sanPhamDAO = new SanPhamDichVu_DAO();
+
+	            if (sanPhamDAO.updateSPham(sanPhamUpdate)) {
+	                JOptionPane.showMessageDialog(updateDialog, "Cập nhật sản phẩm thành công!");
+	                loadSanPhamToTable();
+	                updateDialog.dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(updateDialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (NumberFormatException ex) {
+	            JOptionPane.showMessageDialog(updateDialog, "Giá tiền và số lượng phải là số hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        } catch (Exception ex) {
+	            JOptionPane.showMessageDialog(updateDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            ex.printStackTrace();
+	        }
+	    });
+
+	    btnHuy.addActionListener(e -> updateDialog.dispose());
+
+	    updateDialog.setVisible(true);
+	}
+
+	
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel btnCapNhat;
     private javax.swing.JPanel btnThemDichVu;
@@ -239,7 +529,7 @@ public class SanPham_GUI extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable tbSanPham;
     private javax.swing.JLabel lbCapNhat;
     private javax.swing.JLabel lbThemDichVu;
     private javax.swing.JLabel lbXoa;
