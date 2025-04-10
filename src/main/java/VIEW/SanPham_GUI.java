@@ -266,7 +266,33 @@ public class SanPham_GUI extends javax.swing.JPanel {
                 showUpdateSanPhamDialog(sanPham);
         	}
         });
-        
+        btnXoa.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                int selectedRow = tbSanPham.getSelectedRow();
+                if (selectedRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn sản phẩm cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Lấy mã sản phẩm từ dòng được chọn
+                String maSanPham = tbSanPham.getValueAt(selectedRow, 0).toString();
+
+                // Xác nhận trước khi xóa
+                int confirm = JOptionPane.showConfirmDialog(null, 
+                    "Bạn có chắc chắn muốn xóa sản phẩm '" + maSanPham + "' không?", 
+                    "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    SanPhamDichVu_DAO dao = new SanPhamDichVu_DAO();
+                    if (dao.deleteSPham(maSanPham)) {
+                        JOptionPane.showMessageDialog(null, "Xóa sản phẩm thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                        loadSanPhamToTable(); // Cập nhật lại bảng
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Xóa sản phẩm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
         
     }// </editor-fold>//GEN-END:initComponents
 
