@@ -309,6 +309,39 @@ public class SanPham_GUI extends javax.swing.JPanel {
 	        model.addRow(row);
 	    }
 	}
+	private boolean validData(String maSanPham, String tenSanPham, String danhMuc, double giaTien, int soLuong, boolean isAddMode) {
+	    // Kiểm tra mã sản phẩm (chỉ áp dụng khi thêm mới)
+	    if (isAddMode && (maSanPham == null || maSanPham.trim().isEmpty())) {
+	        JOptionPane.showMessageDialog(null, "Mã sản phẩm không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    // Kiểm tra tên sản phẩm
+	    if (tenSanPham == null || tenSanPham.trim().isEmpty()) {
+	        JOptionPane.showMessageDialog(null, "Tên sản phẩm không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    // Kiểm tra danh mục
+	    if (danhMuc == null || danhMuc.trim().isEmpty()) {
+	        JOptionPane.showMessageDialog(null, "Danh mục không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    // Kiểm tra giá tiền
+	    if (giaTien <= 0) {
+	        JOptionPane.showMessageDialog(null, "Giá tiền phải lớn hơn 0!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    // Kiểm tra số lượng
+	    if (soLuong < 0) {
+	        JOptionPane.showMessageDialog(null, "Số lượng không được âm!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    return true; // Dữ liệu hợp lệ
+	}
 	private void showAddSanPhamDialog() {
 	    final JDialog addDialog = new JDialog(new JDialog((Frame) null, "Thêm dịch vụ", true));
 	    addDialog.setSize(400, 300); // Giảm kích thước vì ít trường hơn
@@ -370,21 +403,16 @@ public class SanPham_GUI extends javax.swing.JPanel {
 
 	    // Xử lý sự kiện nút "Xác Nhận"
 	    btnXacNhan.addActionListener(e -> {
-	        try {
+	    	try {
 	            String maSanPham = txtMaSanPham.getText().trim();
 	            String tenSanPham = txtTenSanPham.getText().trim();
 	            String danhMuc = txtDanhMuc.getText().trim();
 	            double giaTien = Double.parseDouble(txtGiaTien.getText().trim());
 	            int soLuong = Integer.parseInt(txtSoLuong.getText().trim());
 
-	            // Kiểm tra dữ liệu nhập
-	            if (maSanPham.isEmpty() || tenSanPham.isEmpty() || danhMuc.isEmpty()) {
-	                JOptionPane.showMessageDialog(addDialog, "Vui lòng nhập đầy đủ thông tin!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-	                return;
-	            }
-	            if (giaTien <= 0 || soLuong < 0) {
-	                JOptionPane.showMessageDialog(addDialog, "Giá tiền phải lớn hơn 0 và số lượng không được âm!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-	                return;
+	            // Gọi hàm kiểm tra dữ liệu
+	            if (!validData(maSanPham, tenSanPham, danhMuc, giaTien, soLuong, true)) {
+	                return; // Dừng lại nếu dữ liệu không hợp lệ
 	            }
 
 	            // Tạo đối tượng SanPham
@@ -477,19 +505,16 @@ public class SanPham_GUI extends javax.swing.JPanel {
 	    gbc.gridx = 1; updateDialog.add(btnHuy, gbc);
 
 	    btnCapNhat.addActionListener(e -> {
-	        try {
+	    	try {
+	            String maSanPham = txtMaSanPham.getText().trim(); // Không cần kiểm tra vì không chỉnh sửa
 	            String tenSanPham = txtTenSanPham.getText().trim();
 	            String danhMuc = txtDanhMuc.getText().trim();
 	            double giaTien = Double.parseDouble(txtGiaTien.getText().trim());
 	            int soLuong = Integer.parseInt(txtSoLuong.getText().trim());
 
-	            if (tenSanPham.isEmpty() || danhMuc.isEmpty()) {
-	                JOptionPane.showMessageDialog(updateDialog, "Vui lòng nhập đầy đủ thông tin!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-	                return;
-	            }
-	            if (giaTien <= 0 || soLuong < 0) {
-	                JOptionPane.showMessageDialog(updateDialog, "Giá tiền phải lớn hơn 0 và số lượng không được âm!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-	                return;
+	            // Gọi hàm kiểm tra dữ liệu (không kiểm tra maSanPham trong chế độ cập nhật)
+	            if (!validData(null, tenSanPham, danhMuc, giaTien, soLuong, false)) {
+	                return; // Dừng lại nếu dữ liệu không hợp lệ
 	            }
 
 	            // Cập nhật dữ liệu
