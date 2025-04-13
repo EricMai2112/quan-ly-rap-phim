@@ -96,7 +96,7 @@ public class Phim_GUI extends javax.swing.JPanel {
         tbNhanVien.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {},
             new String [] {
-                "Mã phim", "Tên phim", "Thời lượng", "Thể loại", "Trạng thái phim"}
+                "Mã phim", "Tên phim", "Thời lượng", "Thể loại", "Trạng thái phim", "Hình ảnh"}
         ) {
             Class[] types = new Class [] {
                 java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
@@ -221,6 +221,19 @@ public class Phim_GUI extends javax.swing.JPanel {
                 showAddPhimDialog();
             }
         });
+        
+        btnXoa.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                deleteSelectedPhim();
+            }
+        });
+        btnCapNhat.addMouseListener(new MouseAdapter() {
+        	@Override
+        	public void mouseClicked(MouseEvent e) {
+        		updatePhimDialog();
+        	}
+		});
 
     }// </editor-fold>//GEN-END:initComponents
 
@@ -242,7 +255,8 @@ public class Phim_GUI extends javax.swing.JPanel {
 	            phim.getTenPhim(),
 	            phim.getThoiLuong(),
 	            phim.getTheLoai(),
-	            phim.getTrangThaiPhim().toString()
+	            phim.getTrangThaiPhim().toString(),
+	            phim.getHinhAnh()
 	        };
 	        model.addRow(row);
 	    }
@@ -337,6 +351,100 @@ public class Phim_GUI extends javax.swing.JPanel {
 
 	    addDialog.setVisible(true);
 	}
+	
+	private void deleteSelectedPhim() {
+        int selectedRow = tbNhanVien.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn phim cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String maPhim = (String) tbNhanVien.getValueAt(selectedRow, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa phim này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            Phim_DAO phimDAO = new Phim_DAO();
+            if (phimDAO.deletePhim(maPhim)) {
+                JOptionPane.showMessageDialog(this, "Xóa phim thành công!");
+                loadPhimToTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Xóa phim thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+	
+	private void updatePhimDialog() {
+	    int selectedRow = tbNhanVien.getSelectedRow();
+	    if (selectedRow == -1) {
+	        JOptionPane.showMessageDialog(this, "Vui lòng chọn một phim để cập nhật!");
+	        return;
+	    }
+
+	    String maPhim = tbNhanVien.getValueAt(selectedRow, 0).toString();
+	    String tenPhim = tbNhanVien.getValueAt(selectedRow, 1).toString();
+	    int thoiLuong = Integer.parseInt(tbNhanVien.getValueAt(selectedRow, 2).toString());
+	    String theLoai = tbNhanVien.getValueAt(selectedRow, 3).toString();
+	    String trangThaiPhim = tbNhanVien.getValueAt(selectedRow, 4).toString();
+	    String hinhAnh = tbNhanVien.getValueAt(selectedRow, 5).toString();
+
+	    JTextField txtTenPhim = new JTextField(tenPhim);
+	    txtTenPhim.setPreferredSize(new Dimension(50, 30));
+	    JTextField txtThoiLuong = new JTextField(String.valueOf(thoiLuong));
+	    txtThoiLuong.setPreferredSize(new Dimension(50, 30));
+	    JTextField txtTheLoai = new JTextField(theLoai);
+	    txtTheLoai.setPreferredSize(new Dimension(50, 30));
+	    JTextField txtHinhAnh = new JTextField(hinhAnh);
+
+	    JComboBox<TrangThaiPhim> cbTrangThai = new JComboBox<>(TrangThaiPhim.values());
+	    cbTrangThai.setSelectedItem(TrangThaiPhim.fromString(trangThaiPhim));
+
+	    Font font = new Font("Time new Romans", Font.BOLD, 15);
+
+	    JLabel lblTenPhim = new JLabel("Tên phim:");
+	    lblTenPhim.setFont(font);
+	    JLabel lblThoiLuong = new JLabel("Thời lượng:");
+	    lblThoiLuong.setFont(font);
+	    JLabel lblTheLoai = new JLabel("Thể loại:");
+	    lblTheLoai.setFont(font);
+	    JLabel lblTrangThai = new JLabel("Trạng thái phim:");
+	    lblTrangThai.setFont(font);
+	    JLabel lblHinhAnh = new JLabel("Hình ảnh:");
+	    lblHinhAnh.setFont(font);
+
+	    Object[] message = {
+	        lblTenPhim, txtTenPhim,
+	        lblThoiLuong, txtThoiLuong,
+	        lblTheLoai, txtTheLoai,
+	        lblTrangThai, cbTrangThai,
+	        lblHinhAnh, txtHinhAnh
+	    };
+
+	    int option = JOptionPane.showConfirmDialog(this, message, "Cập nhật phim", JOptionPane.OK_CANCEL_OPTION);
+	    if (option == JOptionPane.OK_OPTION) {
+	        try {
+	            TrangThaiPhim trangThaiEnumMoi = (TrangThaiPhim) cbTrangThai.getSelectedItem();
+
+	            Phim phimMoi = new Phim(maPhim, txtTenPhim.getText(),
+	                    Integer.parseInt(txtThoiLuong.getText()), 
+	                    txtTheLoai.getText(),
+	                    trangThaiEnumMoi, 
+	                    txtHinhAnh.getText());
+
+	            Phim_DAO phimDAO = new Phim_DAO();
+	            boolean success = phimDAO.updatePhim(phimMoi);
+
+	            if (success) {
+	                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+	                loadPhimToTable();
+	            } else {
+	                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (IllegalArgumentException e) {
+	            JOptionPane.showMessageDialog(this, "Trạng thái phim không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	        }
+	    }
+	}
+
+
+
 
 
 

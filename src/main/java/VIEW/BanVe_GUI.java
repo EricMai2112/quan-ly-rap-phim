@@ -23,6 +23,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.sql.Date;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -48,8 +49,14 @@ import javax.swing.border.TitledBorder;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.Ghe_DAO;
+import CONTROL.LichChieu_DAO;
 import CONTROL.Phim_DAO;
+import MODEL.Ghe;
+import MODEL.LichChieu;
+import MODEL.LoaiGhe;
 import MODEL.Phim;
+import MODEL.TrangThaiGhe;
 
 /**
  *
@@ -57,6 +64,7 @@ import MODEL.Phim;
  */
 public class BanVe_GUI extends javax.swing.JPanel {
 	private JPanel panelMain;
+	private static BanVe_GUI instance;
 
     JDateChooser txtNgayCheckIn = new com.toedter.calendar.JDateChooser();
     JDateChooser txtNgayCheckOut = new com.toedter.calendar.JDateChooser();
@@ -64,12 +72,20 @@ public class BanVe_GUI extends javax.swing.JPanel {
     /**
      * Creates new form Phong_GUI
      */
+    public static BanVe_GUI getInstance() {
+        if (instance == null) {
+            instance = new BanVe_GUI();
+        }
+        return instance;
+    }
+    
     public BanVe_GUI() {
         
         initComponents();
         loadAndDisplayPhimCards();
 
     }
+    
 
     private void initComponents() {
     	
@@ -138,15 +154,13 @@ public class BanVe_GUI extends javax.swing.JPanel {
     }
     
 
-    private void loadAndDisplayPhimCards() {
+    public void loadAndDisplayPhimCards() {
         Phim_DAO phimDAO = new Phim_DAO();
         List<Phim> listPhim = phimDAO.getAllPhim();
 
-        // Xóa dữ liệu cũ
         panelMain.removeAll();
 
-        // Tạo panel chứa các card phim
-        JPanel cardsPanel = new JPanel(new GridLayout(0, 4, 10, 10)); // 4 cột, khoảng cách 10px
+        JPanel cardsPanel = new JPanel(new GridLayout(0, 4, 10, 10));
         cardsPanel.setBackground(Color.white);
 
         for (Phim phim : listPhim) {
@@ -154,14 +168,12 @@ public class BanVe_GUI extends javax.swing.JPanel {
             cardsPanel.add(card);
         }
 
-        // Tạo JScrollPane mới chứa cardsPanel
         JScrollPane scrollPane = new JScrollPane(cardsPanel);
         scrollPane.setBorder(null);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setPreferredSize(new Dimension(panelMain.getWidth(), panelMain.getHeight()));
 
-        // Thêm JScrollPane vào panelMain
-        panelMain.setLayout(new BorderLayout()); // Thay đổi layout để phù hợp
+        panelMain.setLayout(new BorderLayout());
         panelMain.add(scrollPane, BorderLayout.CENTER);
 
         panelMain.revalidate();
@@ -176,8 +188,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
         card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
         card.setPreferredSize(new Dimension(200, 300));
 
-        // Lấy hình ảnh từ phim
-        String hinhAnh = phim.getHinhAnh(); // Giả sử có phương thức getHinhAnh()
+        String hinhAnh = phim.getHinhAnh();
         JLabel imageLabel;
         
         try {
@@ -193,7 +204,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
         imageLabel.setHorizontalAlignment(JLabel.CENTER);
         card.add(imageLabel, BorderLayout.CENTER);
 
-        // Phần thông tin phim
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
@@ -217,11 +227,86 @@ public class BanVe_GUI extends javax.swing.JPanel {
         infoPanel.add(genreLabel);
         infoPanel.add(durationLabel);
         infoPanel.add(statusLabel);
-
         card.add(infoPanel, BorderLayout.SOUTH);
+        
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                hienDialogLichChieu(phim); // Mở dialog chọn lịch chiếu tương ứng phim
+            }
+        });
+
 
         return card;
     }
+    
+    private void hienDialogLichChieu(Phim phim) {
+        List<LichChieu> lichChieuList = new LichChieu_DAO().getLichChieuByPhim(phim.getMaPhim());
+        if (lichChieuList.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có lịch chiếu cho phim này.");
+            return;
+        }
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn lịch chiếu", true);
+        dialog.setSize(450, 300);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel listPanel = new JPanel(new GridLayout(0, 1, 10, 10));
+        for (LichChieu lc : lichChieuList) {
+            String ngay = new SimpleDateFormat("dd/MM/yyyy").format(lc.getNgayChieu());
+            String gio = new SimpleDateFormat("HH:mm").format(lc.getGioBatDau());
+            String phong = lc.getPhongChieu().getTenPhong();
+            JButton btn = new JButton(ngay + " - " + gio + " tại " + phong);
+            btn.addActionListener(e -> {
+                dialog.dispose();
+                hienDialogChonGhe(lc);
+            });
+            listPanel.add(btn);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(listPanel);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.setVisible(true);
+    }
+
+    private void hienDialogChonGhe(LichChieu lichChieu) {
+        List<Ghe> danhSachGhe = new Ghe_DAO().getDanhSachGheTheoPhong(lichChieu.getPhongChieu().getMaPhong());
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn ghế", true);
+        dialog.setSize(600, 400);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel panelGhe = new JPanel(new GridLayout(5, 10, 5, 5));
+        Map<JButton, Ghe> mapButtonToGhe = new HashMap<>();
+
+        for (Ghe ghe : danhSachGhe) {
+            JButton btnGhe = new JButton(ghe.getSoGhe());
+            if (ghe.getTrangThaiGhe() == TrangThaiGhe.GHE_DAT) {
+                btnGhe.setBackground(Color.RED);
+                btnGhe.setEnabled(false);
+            } else {
+            	if(ghe.getLoaiGhe()== LoaiGhe.THUONG) {
+                    btnGhe.setBackground(Color.GREEN);
+            	}else {
+            		btnGhe.setBackground(Color.ORANGE);
+            	}
+            }
+
+            mapButtonToGhe.put(btnGhe, ghe);
+            btnGhe.addActionListener(e -> {
+                btnGhe.setBackground(Color.YELLOW); 
+            });
+
+            panelGhe.add(btnGhe);
+        }
+
+        dialog.add(new JScrollPane(panelGhe), BorderLayout.CENTER);
+        dialog.setVisible(true);
+    }
+
 
 
     
