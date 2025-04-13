@@ -7,7 +7,9 @@ package VIEW;
 import java.awt.Color;
 import java.awt.Font;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 
@@ -15,6 +17,10 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
+import CONTROL.GiaoDich_DAO;
+import MODEL.GiaoDich;
+import MODEL.KhachHang;
+import MODEL.NhanVien;
 
 /**
  *
@@ -28,8 +34,8 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 	 */
 	public GiaoDich_GUI() {
 		initComponents();
-
-
+		updateHeader();
+		loadData();
 		originalModel = (DefaultTableModel) tbDanhSachDatPhong.getModel();
 
 	}
@@ -63,12 +69,11 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 		jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
 		titleHoaDon.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-		titleHoaDon.setText("Hóa đơn");
+		titleHoaDon.setText("Giao dịch");
 
 		tbDanhSachDatPhong.setModel(new javax.swing.table.DefaultTableModel(new Object[][] {}, // Bắt đầu với dữ liệu
 																								// rỗng
-				new String[] { "Mã Hóa Đơn", "Tên Khách Hàng", "Ngày Lập", "Ngày Nhận Phòng",
-						"Ngày Trả Phòng", "Thuế", "Tổng Tiền" }) {
+				new String[] { "Mã giao dịch", "Tổng tiền ", "Thời gian giao dịch", "Nhân viên", "Khách hàng" }) {
 			Class<?>[] types = new Class<?>[] { java.lang.String.class, java.lang.String.class, java.lang.String.class,
 					java.lang.String.class, java.lang.String.class, java.lang.String.class };
 
@@ -90,18 +95,14 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 		jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
 		jLabel6.setText("Từ");
 
-
-
 		cboTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(
 				new String[] { "Tất cả", "QL001", "NV001", "NV002", "NV003", " " }));
-
 
 		btnXuatFile = new RoundedPanel(30);
 		btnXuatFile.setBackground(new java.awt.Color(129, 251, 184));
 		btnXuatFile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 		btnXuatFile.setMaximumSize(new java.awt.Dimension(100, 50));
 		btnXuatFile.setPreferredSize(new java.awt.Dimension(100, 50));
-
 
 		jLabel1.setBackground(new java.awt.Color(255, 255, 255));
 		jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -126,7 +127,6 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 		btnTimKiem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/Search.png"))); // NOI18N
 
 		txtTimKiem.setForeground(new java.awt.Color(144, 144, 144));
-
 
 		javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
 		jPanel1.setLayout(jPanel1Layout);
@@ -201,8 +201,56 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 
 		add(jPanel1, "card2");
 	}// </editor-fold>//GEN-END:initComponents
+	private void updateHeader() {
+		JTableHeader header = tbDanhSachDatPhong.getTableHeader();
+		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
 
+	}
 
+	public void loadData() {
+        GiaoDich_DAO giaoDichDAO = new GiaoDich_DAO();
+        List<GiaoDich> listGiaoDich;
+        try {
+            listGiaoDich = giaoDichDAO.getAllGiaoDich();
+        } catch (Exception e) {
+            return;
+        }
+
+        DefaultTableModel model;
+        try {
+            model = (DefaultTableModel) tbDanhSachDatPhong.getModel();
+            model.setRowCount(0); // Xóa toàn bộ dòng hiện có
+        } catch (Exception e) {
+            return;
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+        for (GiaoDich giaoDich : listGiaoDich) {
+            NhanVien nhanVien = giaoDich.getNhanVien();
+            KhachHang khachHang = giaoDich.getKhachHang();
+
+            String maNhanVien = nhanVien != null ? nhanVien.getMaNHanVien() : "Không xác định";
+            String maKhachHang = khachHang != null ? khachHang.getMaKhachHang() : "Không xác định";
+            String thoiGianStr = giaoDich.getThoiGianGiaoDich() != null 
+                ? dateFormat.format(giaoDich.getThoiGianGiaoDich()) 
+                : "N/A";
+
+            
+            
+            Object[] row = {
+                giaoDich.getMaGiaoDich(), // Mã giao dịch
+                giaoDich.getTongTien(),   // Tổng tiền
+                thoiGianStr,              // Thời gian giao dịch
+                maNhanVien,              // Nhân viên
+                maKhachHang           // Khách hàng
+               
+            };
+            model.addRow(row);
+        }
+    }
+    
+	
 
 	// Variables declaration - do not modify//GEN-BEGIN:variables
 	private javax.swing.JButton btnTimKiem;

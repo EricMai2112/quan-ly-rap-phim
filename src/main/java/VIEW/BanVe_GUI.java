@@ -50,7 +50,7 @@ import javax.swing.border.TitledBorder;
 import com.toedter.calendar.JDateChooser;
 
 import CONTROL.Ghe_DAO;
-import CONTROL.LichChieu_DAO;
+import CONTROL.LichChieu2_DAO;
 import CONTROL.Phim_DAO;
 import MODEL.Ghe;
 import MODEL.LichChieu;
@@ -242,7 +242,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
     }
     
     private void hienDialogLichChieu(Phim phim) {
-        List<LichChieu> lichChieuList = new LichChieu_DAO().getLichChieuByPhim(phim.getMaPhim());
+        List<LichChieu> lichChieuList = new LichChieu2_DAO().getLichChieuByPhim(phim.getMaPhim());
         if (lichChieuList.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không có lịch chiếu cho phim này.");
             return;

@@ -5,6 +5,11 @@ public class KhachHang {
 	private String tenKhachHang;
 	private String soDienThoai;
 	private String email;
+	
+	public KhachHang() {
+		
+	}
+	
 	public KhachHang(String maKhachHang, String tenKhachHang, String soDienThoai, String email) {
 		super();
 		this.maKhachHang = maKhachHang;
