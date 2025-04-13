@@ -4,12 +4,17 @@ public class PhongChieu {
 	private String maPhong;
 	private String tenPhong;
 	private int soLuongNguoi;
+	
 	public PhongChieu(String maPhong, String tenPhong, int soLuongNguoi) {
 		super();
 		this.maPhong = maPhong;
 		this.tenPhong = tenPhong;
 		this.soLuongNguoi = soLuongNguoi;
 	}
+	public PhongChieu() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public String getMaPhong() {
 		return maPhong;
 	}
