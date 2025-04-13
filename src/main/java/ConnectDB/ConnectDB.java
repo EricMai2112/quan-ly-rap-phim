@@ -28,6 +28,7 @@ public class ConnectDB {
         }
         return connection;
     }
+	
 	public static void closeConnection(Connection conn, Statement stmt, ResultSet rs) {
         try {
             if (rs != null) {

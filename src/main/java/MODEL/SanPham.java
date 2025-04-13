@@ -6,6 +6,10 @@ public class SanPham {
 	private String danhMuc;
 	private Double giaTien;
 	private int soLuong;
+	
+	public SanPham() {
+		
+	}
 	public SanPham(String maSanPham, String tenSanPham, String danhMuc, Double giaTien, int soLuong) {
 		super();
 		this.maSanPham = maSanPham;
