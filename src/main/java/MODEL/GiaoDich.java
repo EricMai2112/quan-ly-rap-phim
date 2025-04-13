@@ -8,6 +8,9 @@ public class GiaoDich {
 	private java.util.Date thoiGianGiaoDich;
 	private NhanVien nhanVien;
 	private KhachHang khachHang;
+	public GiaoDich() {
+		
+	}
 	public GiaoDich(String maGiaoDich, Double tongTien, Date thoiGianGiaoDich, NhanVien nhanVien, KhachHang khachHang) {
 		super();
 		this.maGiaoDich = maGiaoDich;
