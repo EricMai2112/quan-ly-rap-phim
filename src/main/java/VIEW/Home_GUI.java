@@ -126,7 +126,7 @@ public class Home_GUI extends javax.swing.JFrame {
         jLabel3.setText("jLabel1");
 
         lbUserName.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lbUserName.setText("Trần Nguyễn Quốc Quý");
+        lbUserName.setText("Mai Công Thành");
 
         jSeparator2.setBackground(new java.awt.Color(0, 204, 0));
         jSeparator2.setAlignmentX(10.0F);
@@ -648,15 +648,15 @@ public class Home_GUI extends javax.swing.JFrame {
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.LINE_START);
 
-        cardPanel.setBackground(new java.awt.Color(0, 255, 204));
+        cardPanel.setBackground(Color.BLACK);
         cardPanel.setPreferredSize(new java.awt.Dimension(1320, 134));
         cardPanel.setLayout(new java.awt.CardLayout());
 
-        jLabel4.setBackground(new java.awt.Color(255, 255, 255));
+        jLabel4.setBackground(Color.BLACK);
         jLabel4.setFont(new java.awt.Font("Segoe UI", 3, 72)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(25, 159, 254));
+        jLabel4.setForeground(Color.WHITE);
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel4.setText("Welcome to TQSN");
+        jLabel4.setText("TSGMCinema");
         cardPanel.add(jLabel4, "card2");
 
         getContentPane().add(cardPanel, java.awt.BorderLayout.CENTER);
