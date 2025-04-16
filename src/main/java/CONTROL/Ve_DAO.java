@@ -55,8 +55,7 @@ public class Ve_DAO {
                     rs.getString("ghe"),
                     null, // PhongChieu
                     rs.getString("soGhe"),
-                    null, // LoaiGhe
-                    null  // TrangThaiGhe
+                    null
                 );
                 
                 // Tạo đối tượng NhanVien
@@ -100,29 +99,52 @@ public class Ve_DAO {
     }
 	
 	// Thêm vé mới
-    public boolean themVe(String maLichChieu, String maGhe, double giaVe, String maNhanVien, String maKhachHang) {
-        String maVe = taoMaVeMoi();
-        String sql = "INSERT INTO Ve (maVe, lichChieu, ghe, giaVe, trangThaiVe, thoiGianBan, nhanVien, khachHang) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	public String themVe(String maLichChieu, String maGhe, double giaVe, String maNhanVien, String maKhachHang) {
+        // Kiểm tra xem ghế đã được đặt cho lịch chiếu này chưa
+        String checkSql = "SELECT COUNT(*) FROM Ve WHERE ghe = ? AND lichChieu = ?";
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+            checkStmt.setString(1, maGhe);
+            checkStmt.setString(2, maLichChieu);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                // Ghế đã được đặt
+                System.out.println("Ghế " + maGhe + " đã được đặt cho lịch chiếu " + maLichChieu);
+                return null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        // Nếu ghế chưa được đặt, tiến hành chèn vé mới
+        String maVe = generateMaVe();
+        String sql = "INSERT INTO Ve (maVe, lichChieu, ghe, giaVe, trangThaiVe, thoiGianBan, nhanVien, khachHang) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = connectDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, maVe);
             stmt.setString(2, maLichChieu);
             stmt.setString(3, maGhe);
             stmt.setDouble(4, giaVe);
-            stmt.setString(5, "DA_BAN");
-            stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+            stmt.setString(5, "DA_THANH_TOAN");
+            stmt.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
             stmt.setString(7, maNhanVien);
             stmt.setString(8, maKhachHang);
-            stmt.executeUpdate();
-            return true;
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected == 0) {
+                System.out.println("Không có bản ghi nào được chèn vào bảng Ve.");
+                return null;
+            }
+            return maVe;
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
     // Tạo mã vé mới (VXXX)
-    private String taoMaVeMoi() {
+    private String generateMaVe() {
         String sql = "SELECT MAX(maVe) AS maxId FROM Ve";
         try (Connection conn = connectDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);

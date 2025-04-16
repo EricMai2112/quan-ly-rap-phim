@@ -10,8 +10,9 @@ import MODEL.ChiTietGiaoDich;
 public class ChiTietGiaoDich_DAO {
 	private final ConnectDB connectDB = new ConnectDB();
 
-    public boolean themChiTietGiaoDich(ChiTietGiaoDich chiTiet) {
-        String sql = "INSERT INTO ChiTietGiaoDich (maChiTiet, maGiaoDich, maVe, maSanPham, soLuong, donGia, thanhTien) VALUES (?, ?, ?, ?, ?, ?, ?)";
+	public boolean themChiTietGiaoDich(ChiTietGiaoDich chiTiet) {
+        String sql = "INSERT INTO ChiTietGiaoDich (maChiTiet, giaoDich, ve, sanPham, soLuong, donGia, thanhTien) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = connectDB.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, chiTiet.getMaChiTiet());

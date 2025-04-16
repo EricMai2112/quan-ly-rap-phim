@@ -10,6 +10,10 @@ public class KhachHang {
 		
 	}
 	
+public KhachHang(String maKhachHang) {
+	this.maKhachHang = maKhachHang;
+	}
+	
 	public KhachHang(String maKhachHang, String tenKhachHang, String soDienThoai, String email) {
 		super();
 		this.maKhachHang = maKhachHang;

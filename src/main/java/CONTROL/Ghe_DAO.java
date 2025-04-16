@@ -18,61 +18,67 @@ import MODEL.TrangThaiGhe;
 public class Ghe_DAO {
 	private final ConnectDB connectDB = new ConnectDB();
 	
-	 public List<Ghe> getDanhSachGheTheoPhong(String maPhong) {
-	        List<Ghe> danhSach = new ArrayList<>();
-	        Connection conn = null;
-	        PreparedStatement stmt = null;
-	        ResultSet rs = null;
+	public List<Ghe> getDanhSachGheTheoPhong(String maPhong) {
+        List<Ghe> danhSach = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-	        try {
-	            conn = ConnectDB.getConnection();
-	            String sql = "SELECT g.*, pc.tenPhong " +
-	                         "FROM Ghe g " +
-	                         "JOIN PhongChieu pc ON g.phongChieu = pc.maPhong " +
-	                         "WHERE g.phongChieu = ?";
-	            stmt = conn.prepareStatement(sql);
-	            stmt.setString(1, maPhong);
-	            rs = stmt.executeQuery();
+        try {
+            conn = ConnectDB.getConnection();
+            String sql = "SELECT g.*, pc.tenPhong " +
+                         "FROM Ghe g " +
+                         "JOIN PhongChieu pc ON g.phongChieu = pc.maPhong " +
+                         "WHERE g.phongChieu = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, maPhong);
+            rs = stmt.executeQuery();
 
-	            while (rs.next()) {
-	                String maGhe = rs.getString("maGhe");
-	                String soGhe = rs.getString("soGhe");
-	                String maLoaiGhe = rs.getString("loaiGhe");
-	                String trangThai = rs.getString("trangThaiGhe");
-	                String tenPhong = rs.getString("tenPhong");
+            while (rs.next()) {
+                String maGhe = rs.getString("maGhe");
+                String soGhe = rs.getString("soGhe");
+                String maLoaiGhe = rs.getString("loaiGhe");
+                String tenPhong = rs.getString("tenPhong");
 
-	                // Map Enum
-	                LoaiGhe loai = LoaiGhe.valueOf(maLoaiGhe); // enum LoaiGhe: VIP, THUONG
-	                TrangThaiGhe tt = TrangThaiGhe.valueOf(trangThai); // enum: TRONG, DA_DAT
+                // Map Enum
+                LoaiGhe loai = LoaiGhe.valueOf(maLoaiGhe); // enum LoaiGhe: VIP, THUONG
 
-	                PhongChieu phong = new PhongChieu(maPhong, tenPhong);
-	                Ghe ghe = new Ghe(maGhe, phong, soGhe, loai, tt);
-	                danhSach.add(ghe);
-	            }
+                PhongChieu phong = new PhongChieu(maPhong, tenPhong);
+                Ghe ghe = new Ghe(maGhe, phong, soGhe, loai);
+                danhSach.add(ghe);
+            }
 
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        } finally {
-	            try { if (rs != null) rs.close(); } catch (Exception e) {}
-	            try { if (stmt != null) stmt.close(); } catch (Exception e) {}
-	            try { if (conn != null) conn.close(); } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception e) {}
+            try { if (stmt != null) stmt.close(); } catch (Exception e) {}
+            try { if (conn != null) conn.close(); } catch (Exception e) {}
+        }
+
+        return danhSach;
+    }
+
+    // Phương thức kiểm tra trạng thái ghế dựa trên lịch chiếu
+	public TrangThaiGhe getTrangThaiGhe(String maGhe, String maLichChieu) {
+	    String sql = "SELECT COUNT(*) " +
+	                "FROM Ve v " +
+	                "WHERE v.ghe = ? AND v.lichChieu = ? " +
+	                "AND v.trangThaiVe IN ('DA_BAN', 'DA_THANH_TOAN')";
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setString(1, maGhe);
+	        stmt.setString(2, maLichChieu);
+	        ResultSet rs = stmt.executeQuery();
+	        if (rs.next()) {
+	            int count = rs.getInt(1);
+	            System.out.println("maGhe=" + maGhe + ", maLichChieu=" + maLichChieu + ", count=" + count);
+	            return count > 0 ? TrangThaiGhe.GHE_DAT : TrangThaiGhe.GHE_TRONG;
 	        }
-
-	        return danhSach;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
 	    }
-	 
-	 public boolean capNhatTrangThaiGhe(String maGhe, TrangThaiGhe trangThai) {
-		    String sql = "UPDATE Ghe SET trangThaiGhe = ? WHERE maGhe = ?";
-		    try (Connection conn = connectDB.getConnection();
-		         PreparedStatement stmt = conn.prepareStatement(sql)) {
-		        System.out.println("Updating trangThaiGhe for maGhe = " + maGhe + " to: " + trangThai.getDbValue());
-		        stmt.setString(1, trangThai.getDbValue()); // Sử dụng giá trị hợp lệ cho DB
-		        stmt.setString(2, maGhe);
-		        stmt.executeUpdate();
-		        return true;
-		    } catch (SQLException e) {
-		        e.printStackTrace();
-		        return false;
-		    }
-		}
+	    System.out.println("Lỗi: Trả về mặc định GHE_TRONG cho maGhe=" + maGhe + ", maLichChieu=" + maLichChieu);
+	    return TrangThaiGhe.GHE_TRONG;
+	}
 }

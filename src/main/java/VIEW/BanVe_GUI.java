@@ -21,7 +21,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
@@ -52,20 +56,27 @@ import javax.swing.border.TitledBorder;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.ChiTietGiaoDich_DAO;
 import CONTROL.Ghe_DAO;
+import CONTROL.GiaoDich_DAO;
 import CONTROL.KhachHang_DAO;
 import CONTROL.KhachHang_DAO1;
 import CONTROL.LichChieu2_DAO;
 import CONTROL.Phim_DAO;
 import CONTROL.SanPhamDichVu_DAO;
 import CONTROL.Ve_DAO;
+import ConnectDB.ConnectDB;
+import MODEL.ChiTietGiaoDich;
 import MODEL.Ghe;
+import MODEL.GiaoDich;
 import MODEL.KhachHang;
 import MODEL.LichChieu;
 import MODEL.LoaiGhe;
+import MODEL.NhanVien;
 import MODEL.Phim;
 import MODEL.SanPham;
 import MODEL.TrangThaiGhe;
+import MODEL.Ve;
 
 /**
  *
@@ -305,12 +316,14 @@ public class BanVe_GUI extends javax.swing.JPanel {
         DecimalFormat decimalFormat = new DecimalFormat("#,### VNĐ");
         List<JCheckBox> checkboxSanPham = new ArrayList<>();
 
+        Ghe_DAO gheDAO = new Ghe_DAO();
         for (Ghe ghe : danhSachGhe) {
             JButton btnGhe = new JButton(ghe.getSoGhe());
-            if (ghe.getTrangThaiGhe() == TrangThaiGhe.GHE_DAT) {
+            TrangThaiGhe trangThai = gheDAO.getTrangThaiGhe(ghe.getMaGhe(), lichChieu.getMaLichChieu());
+            if (trangThai == TrangThaiGhe.GHE_DAT) {
                 btnGhe.setBackground(Color.RED);
                 btnGhe.setEnabled(false);
-            } else if (ghe.getTrangThaiGhe() == TrangThaiGhe.GHE_TRONG) { // Sửa giá trị kiểm tra
+            } else if (trangThai == TrangThaiGhe.GHE_TRONG) {
                 if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
                     btnGhe.setBackground(Color.GREEN);
                 } else {
@@ -369,6 +382,49 @@ public class BanVe_GUI extends javax.swing.JPanel {
         panelKH.add(new JLabel("Email:"));
         panelKH.add(txtEmail);
 
+        // ==== NÚT LÀM MỚI ====
+        JButton btnLamMoi = new JButton("Làm mới");
+        btnLamMoi.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLamMoi.setBackground(new java.awt.Color(25, 159, 254));
+        btnLamMoi.setForeground(new java.awt.Color(255, 255, 255));
+        btnLamMoi.setFont(new Font("Time new Romans", Font.BOLD, 15));
+        btnLamMoi.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnLamMoi.addActionListener(e -> {
+            panelGhe.removeAll();
+            mapButtonToGhe.clear();
+            for (Ghe ghe : danhSachGhe) {
+                JButton btnGhe = new JButton(ghe.getSoGhe());
+                TrangThaiGhe trangThai = gheDAO.getTrangThaiGhe(ghe.getMaGhe(), lichChieu.getMaLichChieu());
+                if (trangThai == TrangThaiGhe.GHE_DAT) {
+                    btnGhe.setBackground(Color.RED);
+                    btnGhe.setEnabled(false);
+                } else if (trangThai == TrangThaiGhe.GHE_TRONG) {
+                    if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                        btnGhe.setBackground(Color.GREEN);
+                    } else {
+                        btnGhe.setBackground(Color.ORANGE);
+                    }
+                    btnGhe.addActionListener(e2 -> {
+                        Color current = btnGhe.getBackground();
+                        if (current.equals(Color.YELLOW)) {
+                            if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                                btnGhe.setBackground(Color.GREEN);
+                            } else {
+                                btnGhe.setBackground(Color.ORANGE);
+                            }
+                        } else {
+                            btnGhe.setBackground(Color.YELLOW);
+                        }
+                        updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
+                    });
+                }
+                mapButtonToGhe.put(btnGhe, ghe);
+                panelGhe.add(btnGhe);
+            }
+            panelGhe.revalidate();
+            panelGhe.repaint();
+        });
+
         // ==== NÚT THANH TOÁN ====
         JButton btnThanhToan = new JButton("Xác nhận");
         btnThanhToan.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -424,28 +480,120 @@ public class BanVe_GUI extends javax.swing.JPanel {
                 maKhachHang = khachHang.getMaKhachHang();
             }
 
+            // Tính tổng tiền
+            double tongTien = tongTienGhe + tongTienSanPham;
+
+            // Lấy thông tin nhân viên
+            String maNhanVien = "NV001";
+
             // Lưu thông tin vé
             Ve_DAO veDAO = new Ve_DAO();
-            Ghe_DAO gheDAO = new Ghe_DAO();
-            String maNhanVien = "NV001";
+            List<Ve> veList = new ArrayList<>();
             for (Ghe ghe : gheDaChon) {
                 double giaVe = (ghe.getLoaiGhe() == LoaiGhe.THUONG ? 60000 : 100000) + tongTienSanPham / gheDaChon.size();
-                boolean success = veDAO.themVe(lichChieu.getMaLichChieu(), ghe.getMaGhe(), giaVe, maNhanVien, maKhachHang);
-                if (!success) {
-                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu vé cho ghế " + ghe.getSoGhe());
+                String maVe = veDAO.themVe(lichChieu.getMaLichChieu(), ghe.getMaGhe(), giaVe, maNhanVien, maKhachHang);
+                if (maVe == null) {
+                    JOptionPane.showMessageDialog(dialog, "Ghế " + ghe.getSoGhe() + " đã được đặt bởi người khác. Vui lòng chọn ghế khác.");
                     return;
                 }
-                // Cập nhật trạng thái ghế
-                gheDAO.capNhatTrangThaiGhe(ghe.getMaGhe(), TrangThaiGhe.GHE_DAT);
+                Ve ve = new Ve();
+                ve.setMaVe(maVe);
+                ve.setLichChieu(lichChieu);
+                ve.setGhe(ghe);
+                ve.setGiaVe(giaVe);
+                ve.setTrangThaiVe("DA_THANH_TOAN");
+                ve.setThoiGianBan(new java.util.Date());
+                ve.setNhanVien(new NhanVien(maNhanVien));
+                ve.setKhachHang(new KhachHang(maKhachHang));
+                veList.add(ve);
             }
 
+            // Lưu giao dịch
+            GiaoDich_DAO giaoDichDAO = new GiaoDich_DAO();
+            String maGiaoDich = generateMaGiaoDich();
+            GiaoDich giaoDich = new GiaoDich(maGiaoDich, tongTien, new java.util.Date(), new NhanVien(maNhanVien), new KhachHang(maKhachHang));
+            boolean giaoDichSuccess = giaoDichDAO.themGiaoDich(giaoDich);
+            if (!giaoDichSuccess) {
+                JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu giao dịch!");
+                return;
+            }
+
+            // Lưu chi tiết giao dịch
+            ChiTietGiaoDich_DAO chiTietGiaoDichDAO = new ChiTietGiaoDich_DAO();
+            int chiTietCounter = 1;
+            for (Ve ve : veList) {
+                String maChiTiet = maGiaoDich + "_CT" + String.format("%03d", chiTietCounter++);
+                ChiTietGiaoDich chiTietVe = new ChiTietGiaoDich(maChiTiet, giaoDich, ve, null, 1, ve.getGiaVe(), ve.getGiaVe() * 1);
+                boolean chiTietVeSuccess = chiTietGiaoDichDAO.themChiTietGiaoDich(chiTietVe);
+                if (!chiTietVeSuccess) {
+                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu chi tiết giao dịch cho vé " + ve.getMaVe());
+                    return;
+                }
+            }
+            for (SanPham sp : spDaChon) {
+                String maChiTiet = maGiaoDich + "_CT" + String.format("%03d", chiTietCounter++);
+                ChiTietGiaoDich chiTietSp = new ChiTietGiaoDich(maChiTiet, giaoDich, null, sp, 1, sp.getGiaTien(), sp.getGiaTien() * 1);
+                boolean chiTietSpSuccess = chiTietGiaoDichDAO.themChiTietGiaoDich(chiTietSp);
+                if (!chiTietSpSuccess) {
+                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu chi tiết giao dịch cho sản phẩm " + sp.getTenSanPham());
+                    return;
+                }
+            }
+
+            // Làm mới giao diện sau khi đặt vé thành công
             JOptionPane.showMessageDialog(dialog, "Thanh toán thành công!");
-            dialog.dispose();
+            panelGhe.removeAll(); // Xóa các ghế cũ
+            mapButtonToGhe.clear(); // Xóa map cũ
+            for (Ghe ghe : danhSachGhe) {
+                JButton btnGhe = new JButton(ghe.getSoGhe());
+                TrangThaiGhe trangThai = gheDAO.getTrangThaiGhe(ghe.getMaGhe(), lichChieu.getMaLichChieu());
+                if (trangThai == TrangThaiGhe.GHE_DAT) {
+                    btnGhe.setBackground(Color.RED);
+                    btnGhe.setEnabled(false);
+                } else if (trangThai == TrangThaiGhe.GHE_TRONG) {
+                    if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                        btnGhe.setBackground(Color.GREEN);
+                    } else {
+                        btnGhe.setBackground(Color.ORANGE);
+                    }
+                    btnGhe.addActionListener(e2 -> {
+                        Color current = btnGhe.getBackground();
+                        if (current.equals(Color.YELLOW)) {
+                            if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                                btnGhe.setBackground(Color.GREEN);
+                            } else {
+                                btnGhe.setBackground(Color.ORANGE);
+                            }
+                        } else {
+                            btnGhe.setBackground(Color.YELLOW);
+                        }
+                        updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
+                    });
+                }
+                mapButtonToGhe.put(btnGhe, ghe);
+                panelGhe.add(btnGhe);
+            }
+            panelGhe.revalidate();
+            panelGhe.repaint();
+
+            // Đặt lại các trường nhập liệu
+            txtTenKH.setText("");
+            txtSDT.setText("");
+            txtEmail.setText("");
+            for (JCheckBox cb : checkboxSanPham) {
+                cb.setSelected(false);
+            }
+            lblTongTien.setText("Tổng tiền: 0 VNĐ");
+
+            // Không đóng dialog để người dùng có thể tiếp tục đặt ghế
+            // dialog.dispose();
         });
 
         panelPhai.add(panelSanPham);
         panelPhai.add(Box.createVerticalStrut(10));
         panelPhai.add(panelKH);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(btnLamMoi);
         panelPhai.add(Box.createVerticalStrut(10));
         panelPhai.add(btnThanhToan);
         panelPhai.add(Box.createVerticalStrut(10));
@@ -458,6 +606,26 @@ public class BanVe_GUI extends javax.swing.JPanel {
         dialog.setVisible(true);
     }
 
+    private String generateMaGiaoDich() {
+        String sql = "SELECT MAX(maGiaoDich) AS maxId FROM GiaoDich";
+        try (Connection conn = ConnectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                String maxId = rs.getString("maxId");
+                if (maxId != null) {
+                    // Giả sử mã có dạng GD001, GD002, ...
+                    int number = Integer.parseInt(maxId.replace("GD", "")) + 1;
+                    return "GD" + String.format("%03d", number);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "GD001"; // Nếu không có giao dịch nào, bắt đầu từ GD001
+    }
+    
+    
     private void updateTongTien(Map<JButton, Ghe> mapButtonToGhe, List<JCheckBox> checkboxSanPham, 
                                JLabel lblTongTien, DecimalFormat decimalFormat) {
         double tongTien = 0;

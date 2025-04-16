@@ -5,14 +5,12 @@ public class Ghe {
 	private PhongChieu phongChieu;
 	private String soGhe;
 	private LoaiGhe loaiGhe;
-	private TrangThaiGhe trangThaiGhe;
-	public Ghe(String maGhe, PhongChieu phongChieu, String soGhe, LoaiGhe loaiGhe, TrangThaiGhe trangThaiGhe) {
+	public Ghe(String maGhe, PhongChieu phongChieu, String soGhe, LoaiGhe loaiGhe) {
 		super();
 		this.maGhe = maGhe;
 		this.phongChieu = phongChieu;
 		this.soGhe = soGhe;
 		this.loaiGhe = loaiGhe;
-		this.trangThaiGhe = trangThaiGhe;
 	}
 	public String getMaGhe() {
 		return maGhe;
@@ -38,12 +36,7 @@ public class Ghe {
 	public void setLoaiGhe(LoaiGhe loaiGhe) {
 		this.loaiGhe = loaiGhe;
 	}
-	public TrangThaiGhe getTrangThaiGhe() {
-		return trangThaiGhe;
-	}
-	public void setTrangThaiGhe(TrangThaiGhe trangThaiGhe) {
-		this.trangThaiGhe = trangThaiGhe;
-	}
+
 	@Override
 	public String toString() {
 		return "Ghe [maGhe=" + maGhe + ", phongChieu=" + phongChieu + ", soGhe=" + soGhe + "]";

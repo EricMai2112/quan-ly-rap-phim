@@ -50,4 +50,22 @@ public class GiaoDich_DAO {
 
         return list;
     }
+    
+    public boolean themGiaoDich(GiaoDich giaoDich) {
+        String sql = "INSERT INTO GiaoDich (maGiaoDich, tongTien, thoiGianGiaoDich, nhanVien, khachHang) " +
+                     "VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, giaoDich.getMaGiaoDich());
+            stmt.setDouble(2, giaoDich.getTongTien());
+            stmt.setTimestamp(3, new java.sql.Timestamp(giaoDich.getThoiGianGiaoDich().getTime()));
+            stmt.setString(4, giaoDich.getNhanVien().getMaNHanVien());
+            stmt.setString(5, giaoDich.getKhachHang().getMaKhachHang());
+            stmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
