@@ -43,6 +43,7 @@ public class Home_GUI extends javax.swing.JFrame {
         cardPanel.add(new KhachHang_GUI(), "khachhang");
         cardPanel.add(new NhanVien_GUI(), "nhanvien");
         cardPanel.add(new ThongKe_GUI(), "thongke");
+        cardPanel.add(new Ve_GUI(), "ve");
         
     }
     
@@ -100,6 +101,10 @@ public class Home_GUI extends javax.swing.JFrame {
         panelGhe = new javax.swing.JPanel();
         jLabel37 = new javax.swing.JLabel();
         lbGhe = new javax.swing.JLabel();
+        panelVe = new javax.swing.JPanel();
+        jLabel35 = new javax.swing.JLabel();
+        lbVe = new javax.swing.JLabel();
+        jSeparator3 = new javax.swing.JSeparator();
         panelDangXuat = new javax.swing.JPanel();
         jLabel38 = new javax.swing.JLabel();
         lbDangXuat = new javax.swing.JLabel();
@@ -234,7 +239,7 @@ public class Home_GUI extends javax.swing.JFrame {
                 .addGroup(panelPhimLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(lbPhim))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(7, Short.MAX_VALUE))
         );
 
         jPanel1.add(panelPhim);
@@ -322,7 +327,7 @@ public class Home_GUI extends javax.swing.JFrame {
         panelThongKe.setPreferredSize(new java.awt.Dimension(300, 60));
         panelThongKe.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-            	panelThongKeMouseClicked(evt);
+                panelThongKeMouseClicked(evt);
             }
         });
 
@@ -351,7 +356,7 @@ public class Home_GUI extends javax.swing.JFrame {
                 .addGroup(panelThongKeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel30)
                     .addComponent(lbThongKe))
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         jPanel1.add(panelThongKe);
@@ -552,10 +557,55 @@ public class Home_GUI extends javax.swing.JFrame {
                 .addGroup(panelGheLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel37)
                     .addComponent(lbGhe))
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         jPanel1.add(panelGhe);
+
+        panelVe.setBackground(new java.awt.Color(255, 255, 255));
+        panelVe.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        panelVe.setMaximumSize(new java.awt.Dimension(300, 60));
+        panelVe.setPreferredSize(new java.awt.Dimension(300, 60));
+        panelVe.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                panelVeMouseClicked(evt);
+            }
+        });
+
+        jLabel35.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMAGES/ticket.png"))); // NOI18N
+        jLabel35.setText("jLabel20");
+
+        lbVe.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lbVe.setText("Vé");
+
+        javax.swing.GroupLayout panelVeLayout = new javax.swing.GroupLayout(panelVe);
+        panelVe.setLayout(panelVeLayout);
+        panelVeLayout.setHorizontalGroup(
+            panelVeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelVeLayout.createSequentialGroup()
+                .addGap(17, 17, 17)
+                .addComponent(jLabel35, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(lbVe, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(58, Short.MAX_VALUE))
+            .addGroup(panelVeLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jSeparator3)
+                .addContainerGap())
+        );
+        panelVeLayout.setVerticalGroup(
+            panelVeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelVeLayout.createSequentialGroup()
+                .addGap(6, 6, 6)
+                .addGroup(panelVeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel35)
+                    .addComponent(lbVe))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel1.add(panelVe);
 
         panelDangXuat.setBackground(new java.awt.Color(255, 255, 255));
         panelDangXuat.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -634,11 +684,11 @@ public class Home_GUI extends javax.swing.JFrame {
         
         JPanel[] allPanels = { panelBanVe, panelPhim, panelPhongChieu, 
                 panelLichChieu, panelThongKe, panelSanPham, panelGiaoDich, 
-                panelNhanVien, panelKhachHang,panelGhe, panelDangXuat };
+                panelNhanVien, panelKhachHang,panelGhe, panelVe, panelDangXuat };
 
 		JLabel[] allLabels = { lbBanVe, lbPhim, lbPhongChieu, 
 		                lbLichChieu, lbThongKe, lbSanPham, lbGiaoDich, 
-		                lbNhanVien, lbKhachHang, lbGhe, lbDangXuat };
+		                lbNhanVien, lbKhachHang, lbGhe, lbVe, lbDangXuat };
 
         for (int i = 0; i < allPanels.length; i++) {
         	if (allPanels[i] != null && allPanels[i] != selectedPanel ) {  // Kiểm tra nếu panel không null
@@ -653,6 +703,13 @@ public class Home_GUI extends javax.swing.JFrame {
     private void panelBanVeFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_panelBanVeFocusGained
         // TODO add your handling code here:
     }//GEN-LAST:event_panelBanVeFocusGained
+
+    private void panelVeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_panelVeMouseClicked
+        // TODO add your handling code here:
+    	changePanelColor(panelVe, lbVe);
+        
+        showPanel("ve");
+    }//GEN-LAST:event_panelVeMouseClicked
     
     
     private void panelBanVeMouseClicked(java.awt.event.MouseEvent evt) {
@@ -762,6 +819,7 @@ public class Home_GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel32;
     private javax.swing.JLabel jLabel34;
+    private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel36;
     private javax.swing.JLabel jLabel37;
     private javax.swing.JLabel jLabel38;
@@ -772,6 +830,7 @@ public class Home_GUI extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JSeparator jSeparator3;
     private javax.swing.JLabel lbBanVe;
     private javax.swing.JLabel lbDangXuat;
     private javax.swing.JLabel lbGhe;
@@ -784,6 +843,7 @@ public class Home_GUI extends javax.swing.JFrame {
     private javax.swing.JLabel lbSanPham;
     private javax.swing.JLabel lbThongKe;
     private javax.swing.JLabel lbUserName;
+    private javax.swing.JLabel lbVe;
     private javax.swing.JPanel panelBanVe;
     private javax.swing.JPanel panelDangXuat;
     private javax.swing.JPanel panelGhe;
@@ -796,5 +856,6 @@ public class Home_GUI extends javax.swing.JFrame {
     private javax.swing.JPanel panelSanPham;
     private javax.swing.JPanel panelThongKe;
     private javax.swing.JPanel panelUser3;
+    private javax.swing.JPanel panelVe;
     // End of variables declaration//GEN-END:variables
 }

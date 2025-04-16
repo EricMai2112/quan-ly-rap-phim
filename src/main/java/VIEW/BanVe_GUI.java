@@ -31,9 +31,11 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -52,10 +54,12 @@ import com.toedter.calendar.JDateChooser;
 import CONTROL.Ghe_DAO;
 import CONTROL.LichChieu2_DAO;
 import CONTROL.Phim_DAO;
+import CONTROL.SanPhamDichVu_DAO;
 import MODEL.Ghe;
 import MODEL.LichChieu;
 import MODEL.LoaiGhe;
 import MODEL.Phim;
+import MODEL.SanPham;
 import MODEL.TrangThaiGhe;
 
 /**
@@ -275,10 +279,18 @@ public class BanVe_GUI extends javax.swing.JPanel {
         List<Ghe> danhSachGhe = new Ghe_DAO().getDanhSachGheTheoPhong(lichChieu.getPhongChieu().getMaPhong());
 
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn ghế", true);
-        dialog.setSize(600, 400);
+        dialog.setSize(900, 500);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
 
+        // Layout chính: trái (ghế), phải (sản phẩm + khách hàng + thanh toán)
+        JPanel panelMain = new JPanel(new BorderLayout());
+        JPanel panelTrai = new JPanel(new BorderLayout());
+        JPanel panelPhai = new JPanel();
+        panelPhai.setLayout(new BoxLayout(panelPhai, BoxLayout.Y_AXIS));
+        panelPhai.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // ==== PANEL GHẾ ====
         JPanel panelGhe = new JPanel(new GridLayout(5, 10, 5, 5));
         Map<JButton, Ghe> mapButtonToGhe = new HashMap<>();
 
@@ -288,22 +300,110 @@ public class BanVe_GUI extends javax.swing.JPanel {
                 btnGhe.setBackground(Color.RED);
                 btnGhe.setEnabled(false);
             } else {
-            	if(ghe.getLoaiGhe()== LoaiGhe.THUONG) {
+                if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
                     btnGhe.setBackground(Color.GREEN);
-            	}else {
-            		btnGhe.setBackground(Color.ORANGE);
-            	}
+                } else {
+                    btnGhe.setBackground(Color.ORANGE);
+                }
+
+                btnGhe.addActionListener(e -> {
+                    Color current = btnGhe.getBackground();
+                    // Toggle chọn/huỷ chọn
+                    if (current.equals(Color.YELLOW)) {
+                        if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                            btnGhe.setBackground(Color.GREEN);
+                        } else {
+                            btnGhe.setBackground(Color.ORANGE);
+                        }
+                    } else {
+                        btnGhe.setBackground(Color.YELLOW);
+                    }
+                });
             }
 
             mapButtonToGhe.put(btnGhe, ghe);
-            btnGhe.addActionListener(e -> {
-                btnGhe.setBackground(Color.YELLOW); 
-            });
-
             panelGhe.add(btnGhe);
         }
 
-        dialog.add(new JScrollPane(panelGhe), BorderLayout.CENTER);
+        panelTrai.setBorder(BorderFactory.createTitledBorder("Sơ đồ ghế"));
+        panelTrai.add(new JScrollPane(panelGhe), BorderLayout.CENTER);
+
+        // ==== PANEL SẢN PHẨM ====
+        JPanel panelSanPham = new JPanel(new GridLayout(0, 1, 5, 5));
+        panelSanPham.setBorder(BorderFactory.createTitledBorder("Chọn sản phẩm"));
+
+        SanPhamDichVu_DAO spDAO = new SanPhamDichVu_DAO();
+        List<SanPham> dsSanPham = spDAO.getAllSanPham();
+        List<JCheckBox> checkboxSanPham = new ArrayList<>();
+
+        for (SanPham sp : dsSanPham) {
+            JCheckBox cb = new JCheckBox(sp.getTenSanPham() + " - " + sp.getGiaTien() + " VND");
+            cb.putClientProperty("sanpham", sp);
+            checkboxSanPham.add(cb);
+            panelSanPham.add(cb);
+        }
+// ==== PANEL THÔNG TIN KH ====
+        JPanel panelKH = new JPanel(new GridLayout(0, 2, 5, 5));
+        panelKH.setBorder(BorderFactory.createTitledBorder("Thông tin khách hàng"));
+        JTextField txtTenKH = new JTextField();
+        JTextField txtSDT = new JTextField();
+        panelKH.add(new JLabel("Họ tên:"));
+        panelKH.add(txtTenKH);
+        panelKH.add(new JLabel("SĐT:"));
+        panelKH.add(txtSDT);
+
+        // ==== NÚT THANH TOÁN ====
+        JButton btnThanhToan = new JButton("Xác nhận");
+        btnThanhToan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnThanhToan.setBackground(new java.awt.Color(25, 159, 254));
+        btnThanhToan.setForeground(new java.awt.Color(255, 255, 255));
+        btnThanhToan.setFont(new Font("Time new Romans", Font.BOLD, 15));
+        btnThanhToan.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnThanhToan.addActionListener(e -> {
+            List<Ghe> gheDaChon = new ArrayList<>();
+            for (Map.Entry<JButton, Ghe> entry : mapButtonToGhe.entrySet()) {
+                JButton btn = entry.getKey();
+                if (btn.getBackground().equals(Color.YELLOW)) {
+                    gheDaChon.add(entry.getValue());
+                }
+            }
+
+            String hoTen = txtTenKH.getText().trim();
+            String sdt = txtSDT.getText().trim();
+            if (hoTen.isEmpty() || sdt.isEmpty() || gheDaChon.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập thông tin và chọn ít nhất 1 ghế.");
+                return;
+            }
+
+            List<SanPham> spDaChon = new ArrayList<>();
+            for (JCheckBox cb : checkboxSanPham) {
+                if (cb.isSelected()) {
+                    SanPham sp = (SanPham) cb.getClientProperty("sanpham");
+                    spDaChon.add(sp);
+                }
+            }
+
+            // TODO: Xử lý lưu thông tin đặt vé ở đây (gheDaChon, spDaChon, hoTen, sdt)
+            System.out.println("Ghế đã chọn: " + gheDaChon);
+            System.out.println("Sản phẩm: " + spDaChon);
+            System.out.println("Khách hàng: " + hoTen + " - " + sdt);
+
+            JOptionPane.showMessageDialog(dialog, "Thanh toán thành công!");
+            dialog.dispose();
+        });
+
+        // Add tất cả vào panel phải
+        panelPhai.add(panelSanPham);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(panelKH);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(btnThanhToan);
+
+        // Gộp lại
+        panelMain.add(panelTrai, BorderLayout.CENTER);
+        panelMain.add(panelPhai, BorderLayout.EAST);
+        dialog.add(panelMain);
+
         dialog.setVisible(true);
     }
 
