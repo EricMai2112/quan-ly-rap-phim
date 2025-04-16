@@ -65,6 +65,7 @@ import CONTROL.LichChieu2_DAO;
 import CONTROL.Phim_DAO;
 import CONTROL.SanPhamDichVu_DAO;
 import CONTROL.Ve_DAO;
+import Components.ExportFile;
 import ConnectDB.ConnectDB;
 import MODEL.ChiTietGiaoDich;
 import MODEL.Ghe;
@@ -542,6 +543,21 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
             // Làm mới giao diện sau khi đặt vé thành công
             JOptionPane.showMessageDialog(dialog, "Thanh toán thành công!");
+         // Xuất file PDF
+            ExportFile exportFile = new ExportFile();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+            exportFile.exportTicketInvoiceToPDF(
+                giaoDich, 
+                new KhachHang(maKhachHang, hoTen, sdt, email), 
+                veList, 
+                spDaChon, 
+                tongTien, 
+                lichChieu.getPhim().getTenPhim(), 
+                dateFormat.format(lichChieu.getNgayChieu()), 
+                timeFormat.format(lichChieu.getGioBatDau()), 
+                lichChieu.getPhongChieu().getTenPhong()
+            );
             panelGhe.removeAll(); // Xóa các ghế cũ
             mapButtonToGhe.clear(); // Xóa map cũ
             for (Ghe ghe : danhSachGhe) {
