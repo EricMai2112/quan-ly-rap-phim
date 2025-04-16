@@ -3,6 +3,7 @@ package CONTROL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Date;
@@ -59,4 +60,19 @@ public class Ghe_DAO {
 
 	        return danhSach;
 	    }
+	 
+	 public boolean capNhatTrangThaiGhe(String maGhe, TrangThaiGhe trangThai) {
+		    String sql = "UPDATE Ghe SET trangThaiGhe = ? WHERE maGhe = ?";
+		    try (Connection conn = connectDB.getConnection();
+		         PreparedStatement stmt = conn.prepareStatement(sql)) {
+		        System.out.println("Updating trangThaiGhe for maGhe = " + maGhe + " to: " + trangThai.getDbValue());
+		        stmt.setString(1, trangThai.getDbValue()); // Sử dụng giá trị hợp lệ cho DB
+		        stmt.setString(2, maGhe);
+		        stmt.executeUpdate();
+		        return true;
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		        return false;
+		    }
+		}
 }

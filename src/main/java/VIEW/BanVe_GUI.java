@@ -22,6 +22,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.sql.Date;
+import java.text.DecimalFormat;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,10 +53,14 @@ import javax.swing.border.TitledBorder;
 import com.toedter.calendar.JDateChooser;
 
 import CONTROL.Ghe_DAO;
+import CONTROL.KhachHang_DAO;
+import CONTROL.KhachHang_DAO1;
 import CONTROL.LichChieu2_DAO;
 import CONTROL.Phim_DAO;
 import CONTROL.SanPhamDichVu_DAO;
+import CONTROL.Ve_DAO;
 import MODEL.Ghe;
+import MODEL.KhachHang;
 import MODEL.LichChieu;
 import MODEL.LoaiGhe;
 import MODEL.Phim;
@@ -128,7 +133,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
 
         
-        JLabel lblTitle = new JLabel("Danh sách phòng");
+        JLabel lblTitle = new JLabel("Danh sách phim");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         headerPanel.add(panelLocNgay, BorderLayout.WEST);
         //Panel bên phải
@@ -283,7 +288,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
 
-        // Layout chính: trái (ghế), phải (sản phẩm + khách hàng + thanh toán)
         JPanel panelMain = new JPanel(new BorderLayout());
         JPanel panelTrai = new JPanel(new BorderLayout());
         JPanel panelPhai = new JPanel();
@@ -294,12 +298,19 @@ public class BanVe_GUI extends javax.swing.JPanel {
         JPanel panelGhe = new JPanel(new GridLayout(5, 10, 5, 5));
         Map<JButton, Ghe> mapButtonToGhe = new HashMap<>();
 
+        JLabel lblTongTien = new JLabel("Tổng tiền: 0 VNĐ");
+        lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTongTien.setForeground(Color.RED);
+        lblTongTien.setAlignmentX(Component.CENTER_ALIGNMENT);
+        DecimalFormat decimalFormat = new DecimalFormat("#,### VNĐ");
+        List<JCheckBox> checkboxSanPham = new ArrayList<>();
+
         for (Ghe ghe : danhSachGhe) {
             JButton btnGhe = new JButton(ghe.getSoGhe());
             if (ghe.getTrangThaiGhe() == TrangThaiGhe.GHE_DAT) {
                 btnGhe.setBackground(Color.RED);
                 btnGhe.setEnabled(false);
-            } else {
+            } else if (ghe.getTrangThaiGhe() == TrangThaiGhe.GHE_TRONG) { // Sửa giá trị kiểm tra
                 if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
                     btnGhe.setBackground(Color.GREEN);
                 } else {
@@ -308,7 +319,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
                 btnGhe.addActionListener(e -> {
                     Color current = btnGhe.getBackground();
-                    // Toggle chọn/huỷ chọn
                     if (current.equals(Color.YELLOW)) {
                         if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
                             btnGhe.setBackground(Color.GREEN);
@@ -318,6 +328,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
                     } else {
                         btnGhe.setBackground(Color.YELLOW);
                     }
+                    updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
                 });
             }
 
@@ -334,23 +345,29 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
         SanPhamDichVu_DAO spDAO = new SanPhamDichVu_DAO();
         List<SanPham> dsSanPham = spDAO.getAllSanPham();
-        List<JCheckBox> checkboxSanPham = new ArrayList<>();
 
         for (SanPham sp : dsSanPham) {
-            JCheckBox cb = new JCheckBox(sp.getTenSanPham() + " - " + sp.getGiaTien() + " VND");
+            JCheckBox cb = new JCheckBox(sp.getTenSanPham() + " - " + sp.getGiaTien() + " VNĐ");
             cb.putClientProperty("sanpham", sp);
+            cb.addActionListener(e -> {
+                updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
+            });
             checkboxSanPham.add(cb);
             panelSanPham.add(cb);
         }
-// ==== PANEL THÔNG TIN KH ====
+
+        // ==== PANEL THÔNG TIN KHÁCH HÀNG ====
         JPanel panelKH = new JPanel(new GridLayout(0, 2, 5, 5));
         panelKH.setBorder(BorderFactory.createTitledBorder("Thông tin khách hàng"));
         JTextField txtTenKH = new JTextField();
         JTextField txtSDT = new JTextField();
+        JTextField txtEmail = new JTextField();
         panelKH.add(new JLabel("Họ tên:"));
         panelKH.add(txtTenKH);
         panelKH.add(new JLabel("SĐT:"));
         panelKH.add(txtSDT);
+        panelKH.add(new JLabel("Email:"));
+        panelKH.add(txtEmail);
 
         // ==== NÚT THANH TOÁN ====
         JButton btnThanhToan = new JButton("Xác nhận");
@@ -361,45 +378,79 @@ public class BanVe_GUI extends javax.swing.JPanel {
         btnThanhToan.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnThanhToan.addActionListener(e -> {
             List<Ghe> gheDaChon = new ArrayList<>();
+            double tongTienGhe = 0;
             for (Map.Entry<JButton, Ghe> entry : mapButtonToGhe.entrySet()) {
                 JButton btn = entry.getKey();
+                Ghe ghe = entry.getValue();
                 if (btn.getBackground().equals(Color.YELLOW)) {
-                    gheDaChon.add(entry.getValue());
+                    gheDaChon.add(ghe);
+                    if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                        tongTienGhe += 60000;
+                    } else {
+                        tongTienGhe += 100000;
+                    }
                 }
             }
 
             String hoTen = txtTenKH.getText().trim();
             String sdt = txtSDT.getText().trim();
+            String email = txtEmail.getText().trim();
             if (hoTen.isEmpty() || sdt.isEmpty() || gheDaChon.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập thông tin và chọn ít nhất 1 ghế.");
+                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập họ tên, số điện thoại và chọn ít nhất 1 ghế.");
                 return;
             }
 
             List<SanPham> spDaChon = new ArrayList<>();
+            double tongTienSanPham = 0;
             for (JCheckBox cb : checkboxSanPham) {
                 if (cb.isSelected()) {
                     SanPham sp = (SanPham) cb.getClientProperty("sanpham");
                     spDaChon.add(sp);
+                    tongTienSanPham += sp.getGiaTien();
                 }
             }
 
-            // TODO: Xử lý lưu thông tin đặt vé ở đây (gheDaChon, spDaChon, hoTen, sdt)
-            System.out.println("Ghế đã chọn: " + gheDaChon);
-            System.out.println("Sản phẩm: " + spDaChon);
-            System.out.println("Khách hàng: " + hoTen + " - " + sdt);
+            // Lưu thông tin khách hàng
+            KhachHang_DAO1 khachHangDAO = new KhachHang_DAO1();
+            KhachHang khachHang = khachHangDAO.getKhachHangBySDT(sdt);
+            String maKhachHang;
+            if (khachHang == null) {
+                maKhachHang = khachHangDAO.themKhachHang(hoTen, sdt, email);
+                if (maKhachHang == null) {
+                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu thông tin khách hàng!");
+                    return;
+                }
+            } else {
+                maKhachHang = khachHang.getMaKhachHang();
+            }
+
+            // Lưu thông tin vé
+            Ve_DAO veDAO = new Ve_DAO();
+            Ghe_DAO gheDAO = new Ghe_DAO();
+            String maNhanVien = "NV001";
+            for (Ghe ghe : gheDaChon) {
+                double giaVe = (ghe.getLoaiGhe() == LoaiGhe.THUONG ? 60000 : 100000) + tongTienSanPham / gheDaChon.size();
+                boolean success = veDAO.themVe(lichChieu.getMaLichChieu(), ghe.getMaGhe(), giaVe, maNhanVien, maKhachHang);
+                if (!success) {
+                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu vé cho ghế " + ghe.getSoGhe());
+                    return;
+                }
+                // Cập nhật trạng thái ghế
+                gheDAO.capNhatTrangThaiGhe(ghe.getMaGhe(), TrangThaiGhe.GHE_DAT);
+            }
 
             JOptionPane.showMessageDialog(dialog, "Thanh toán thành công!");
             dialog.dispose();
         });
 
-        // Add tất cả vào panel phải
         panelPhai.add(panelSanPham);
         panelPhai.add(Box.createVerticalStrut(10));
         panelPhai.add(panelKH);
         panelPhai.add(Box.createVerticalStrut(10));
         panelPhai.add(btnThanhToan);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(lblTongTien);
 
-        // Gộp lại
         panelMain.add(panelTrai, BorderLayout.CENTER);
         panelMain.add(panelPhai, BorderLayout.EAST);
         dialog.add(panelMain);
@@ -407,6 +458,31 @@ public class BanVe_GUI extends javax.swing.JPanel {
         dialog.setVisible(true);
     }
 
+    private void updateTongTien(Map<JButton, Ghe> mapButtonToGhe, List<JCheckBox> checkboxSanPham, 
+                               JLabel lblTongTien, DecimalFormat decimalFormat) {
+        double tongTien = 0;
+
+        for (Map.Entry<JButton, Ghe> entry : mapButtonToGhe.entrySet()) {
+            JButton btn = entry.getKey();
+            Ghe ghe = entry.getValue();
+            if (btn.getBackground().equals(Color.YELLOW)) {
+                if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                    tongTien += 60000;
+                } else {
+                    tongTien += 100000;
+                }
+            }
+        }
+
+        for (JCheckBox cb : checkboxSanPham) {
+            if (cb.isSelected()) {
+                SanPham sp = (SanPham) cb.getClientProperty("sanpham");
+                tongTien += sp.getGiaTien();
+            }
+        }
+
+        lblTongTien.setText("Tổng tiền: " + decimalFormat.format(tongTien));
+    }
 
 
     

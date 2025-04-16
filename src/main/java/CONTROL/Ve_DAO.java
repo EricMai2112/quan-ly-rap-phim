@@ -98,4 +98,46 @@ public class Ve_DAO {
         
         return list;
     }
+	
+	// Thêm vé mới
+    public boolean themVe(String maLichChieu, String maGhe, double giaVe, String maNhanVien, String maKhachHang) {
+        String maVe = taoMaVeMoi();
+        String sql = "INSERT INTO Ve (maVe, lichChieu, ghe, giaVe, trangThaiVe, thoiGianBan, nhanVien, khachHang) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, maVe);
+            stmt.setString(2, maLichChieu);
+            stmt.setString(3, maGhe);
+            stmt.setDouble(4, giaVe);
+            stmt.setString(5, "DA_BAN");
+            stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+            stmt.setString(7, maNhanVien);
+            stmt.setString(8, maKhachHang);
+            stmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Tạo mã vé mới (VXXX)
+    private String taoMaVeMoi() {
+        String sql = "SELECT MAX(maVe) AS maxId FROM Ve";
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                String maxId = rs.getString("maxId");
+                if (maxId != null) {
+                    int number = Integer.parseInt(maxId.replace("V", "")) + 1;
+                    return String.format("V%03d", number);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "V001"; // Nếu không có vé nào, bắt đầu từ V001
+    }
+	
 }

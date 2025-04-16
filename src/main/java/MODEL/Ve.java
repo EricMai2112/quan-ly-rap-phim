@@ -12,6 +12,11 @@ public class Ve {
 	private java.util.Date thoiGianBan;
 	private NhanVien nhanVien;
 	private KhachHang khachHang;
+	
+	public Ve() {
+		
+	}
+	
 	public Ve(String maVe, LichChieu lichChieu, Ghe ghe, Double giaVe, String trangThaiVe, Date thoiGianBan,
 			NhanVien nhanVien, KhachHang khachHang) {
 		super();
