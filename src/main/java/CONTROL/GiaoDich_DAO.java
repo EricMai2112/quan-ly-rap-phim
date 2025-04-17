@@ -68,4 +68,41 @@ public class GiaoDich_DAO {
             return false;
         }
     }
+    public GiaoDich findGiaoDichByMa(String maGiaoDich) {
+        String sql = "SELECT * FROM GiaoDich WHERE maGiaoDich = ?";
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, maGiaoDich);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // Create a GiaoDich object with the retrieved data
+            	GiaoDich giaoDich = new GiaoDich();
+                giaoDich.setMaGiaoDich(rs.getString("maGiaoDich"));
+                giaoDich.setTongTien(rs.getDouble("tongTien"));
+                Timestamp timestamp = rs.getTimestamp("thoiGianGiaoDich");
+                if (timestamp != null) {
+                    giaoDich.setThoiGianGiaoDich(new java.util.Date(timestamp.getTime()));
+                } else {
+                    giaoDich.setThoiGianGiaoDich(null);
+                }
+
+                // Fetch NhanVien and KhachHang (assuming they are stored as foreign keys)
+                String maNhanVien = rs.getString("NhanVien");
+                String maKhachHang = rs.getString("khachHang");
+
+                // You might need to fetch NhanVien and KhachHang objects from their respective DAOs
+                NhanVien nhanVien = new NhanVien_DAO().getNhanVienByMa(maNhanVien); // Assuming you have this method
+                KhachHang khachHang = new KhachHang_DAO().getKhachHangByMa(maKhachHang); // Assuming you have this method
+
+                giaoDich.setNhanVien(nhanVien);
+                giaoDich.setKhachHang(khachHang);
+
+                return giaoDich;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // Return null if no transaction is found
+    }
 }

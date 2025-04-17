@@ -6,6 +6,11 @@ package VIEW;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -13,9 +18,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+
+import com.itextpdf.layout.Document;
 
 import CONTROL.GiaoDich_DAO;
 import MODEL.GiaoDich;
@@ -33,6 +41,9 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 	 * Creates new form BaoCaoCongViec_GUI
 	 */
 	public GiaoDich_GUI() {
+		enum TrangThai {
+	        TAT_CA, QL001, NV001, NV002, NV003
+	    }
 		initComponents();
 		updateHeader();
 		loadData();
@@ -200,7 +211,63 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 						.addContainerGap()));
 
 		add(jPanel1, "card2");
+		btnXuatFile.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseClicked(java.awt.event.MouseEvent evt) {
+				xuatFilePDF();
+			}
+		});
+		btnTimKiem.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+		        String ma = txtTimKiem.getText().trim();
+		        if (ma.isEmpty()) {
+		            JOptionPane.showMessageDialog(null, "Vui lòng nhập mã giao dịch.");
+		            return;
+		        }
+
+		        // Gọi DAO để lấy giao dịch cụ thể
+		        GiaoDich_DAO dao = new GiaoDich_DAO();
+		        GiaoDich giaoDich = dao.findGiaoDichByMa(ma); // Cần thêm phương thức này trong GiaoDich_DAO
+
+		        // Lấy model của bảng
+		        DefaultTableModel model = (DefaultTableModel) tbDanhSachDatPhong.getModel();
+		        model.setRowCount(0); // Xóa toàn bộ dòng hiện có trong bảng
+
+		        if (giaoDich != null) {
+		            // Nếu tìm thấy giao dịch, hiển thị chỉ dòng đó
+		            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		            NhanVien nhanVien = giaoDich.getNhanVien();
+		            KhachHang khachHang = giaoDich.getKhachHang();
+
+		            String maNhanVien = nhanVien != null ? nhanVien.getMaNHanVien() : "Không xác định";
+		            String maKhachHang = khachHang != null ? khachHang.getMaKhachHang() : "Không xác định";
+		            String thoiGianStr = giaoDich.getThoiGianGiaoDich() != null
+		                    ? dateFormat.format(giaoDich.getThoiGianGiaoDich())
+		                    : "N/A";
+
+		            Object[] row = {
+		                giaoDich.getMaGiaoDich(),
+		                giaoDich.getTongTien(),
+		                thoiGianStr,
+		                maNhanVien,
+		                maKhachHang
+		            };
+		            model.addRow(row); // Thêm dòng khớp với mã giao dịch
+		        } else {
+		            // Nếu không tìm thấy, thông báo và tải lại toàn bộ dữ liệu
+		            JOptionPane.showMessageDialog(null, "Không tìm thấy giao dịch " + ma + ".");
+		            loadData(); // Tải lại toàn bộ dữ liệu
+		        }
+		    }
+		});
+		txtNgayCheckIn.getDateEditor().addPropertyChangeListener("date", evt -> {
+		    filterByDateRange();
+		});
+
+		txtNgayCheckOut.getDateEditor().addPropertyChangeListener("date", evt -> {
+		    filterByDateRange();
+		});
 	}// </editor-fold>//GEN-END:initComponents
+
 	private void updateHeader() {
 		JTableHeader header = tbDanhSachDatPhong.getTableHeader();
 		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
@@ -208,48 +275,145 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 	}
 
 	public void loadData() {
-        GiaoDich_DAO giaoDichDAO = new GiaoDich_DAO();
-        List<GiaoDich> listGiaoDich;
-        try {
-            listGiaoDich = giaoDichDAO.getAllGiaoDich();
-        } catch (Exception e) {
-            return;
-        }
+		GiaoDich_DAO giaoDichDAO = new GiaoDich_DAO();
+		List<GiaoDich> listGiaoDich;
+		try {
+			listGiaoDich = giaoDichDAO.getAllGiaoDich();
+		} catch (Exception e) {
+			return;
+		}
 
-        DefaultTableModel model;
-        try {
-            model = (DefaultTableModel) tbDanhSachDatPhong.getModel();
-            model.setRowCount(0); // Xóa toàn bộ dòng hiện có
-        } catch (Exception e) {
-            return;
-        }
+		DefaultTableModel model;
+		try {
+			model = (DefaultTableModel) tbDanhSachDatPhong.getModel();
+			model.setRowCount(0); // Xóa toàn bộ dòng hiện có
+		} catch (Exception e) {
+			return;
+		}
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-        for (GiaoDich giaoDich : listGiaoDich) {
-            NhanVien nhanVien = giaoDich.getNhanVien();
-            KhachHang khachHang = giaoDich.getKhachHang();
+		for (GiaoDich giaoDich : listGiaoDich) {
+			NhanVien nhanVien = giaoDich.getNhanVien();
+			KhachHang khachHang = giaoDich.getKhachHang();
 
-            String maNhanVien = nhanVien != null ? nhanVien.getMaNHanVien() : "Không xác định";
-            String maKhachHang = khachHang != null ? khachHang.getMaKhachHang() : "Không xác định";
-            String thoiGianStr = giaoDich.getThoiGianGiaoDich() != null 
-                ? dateFormat.format(giaoDich.getThoiGianGiaoDich()) 
-                : "N/A";
+			String maNhanVien = nhanVien != null ? nhanVien.getMaNHanVien() : "Không xác định";
+			String maKhachHang = khachHang != null ? khachHang.getMaKhachHang() : "Không xác định";
+			String thoiGianStr = giaoDich.getThoiGianGiaoDich() != null
+					? dateFormat.format(giaoDich.getThoiGianGiaoDich())
+					: "N/A";
 
-            
-            
-            Object[] row = {
-                giaoDich.getMaGiaoDich(), // Mã giao dịch
-                giaoDich.getTongTien(),   // Tổng tiền
-                thoiGianStr,              // Thời gian giao dịch
-                maNhanVien,              // Nhân viên
-                maKhachHang           // Khách hàng
-               
-            };
-            model.addRow(row);
-        }
-    }
-    
+			Object[] row = { giaoDich.getMaGiaoDich(), // Mã giao dịch
+					giaoDich.getTongTien(), // Tổng tiền
+					thoiGianStr, // Thời gian giao dịch
+					maNhanVien, // Nhân viên
+					maKhachHang // Khách hàng
+
+			};
+			model.addRow(row);
+		}
+
+	}
+
+	public void xuatFilePDF() {
+		try {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setDialogTitle("Lưu file dưới dạng PDF (giả lập)");
+			int userSelection = fileChooser.showSaveDialog(this);
+
+			if (userSelection == JFileChooser.APPROVE_OPTION) {
+				File fileToSave = fileChooser.getSelectedFile();
+				// Nếu chưa có .pdf ở cuối, tự thêm
+				if (!fileToSave.getName().toLowerCase().endsWith(".pdf")) {
+					fileToSave = new File(fileToSave.getAbsolutePath() + ".pdf");
+				}
+
+				PrintWriter writer = new PrintWriter(fileToSave, "UTF-8");
+
+				// Tiêu đề
+				writer.println("DANH SÁCH GIAO DỊCH");
+				writer.println("==============================");
+
+				// Duyệt dữ liệu bảng
+				for (int i = 0; i < tbDanhSachDatPhong.getRowCount(); i++) {
+					writer.println("Mã giao dịch: " + tbDanhSachDatPhong.getValueAt(i, 0));
+					writer.println("Tổng tiền   : " + tbDanhSachDatPhong.getValueAt(i, 1));
+					writer.println("Thời gian   : " + tbDanhSachDatPhong.getValueAt(i, 2));
+					writer.println("Nhân viên   : " + tbDanhSachDatPhong.getValueAt(i, 3));
+					writer.println("Khách hàng  : " + tbDanhSachDatPhong.getValueAt(i, 4));
+					writer.println("------------------------------");
+				}
+
+				writer.close();
+				JOptionPane.showMessageDialog(this, "Xuất file thành công: " + fileToSave.getAbsolutePath());
+			}
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Xuất file thất bại: " + e.getMessage());
+		}
+	}
+	private void filterByDateRange() {
+		java.util.Date fromDate = txtNgayCheckIn.getDate();
+	    java.util.Date toDate = txtNgayCheckOut.getDate();
+
+	    // If either date is not selected, reload all data
+	    if (fromDate == null || toDate == null) {
+	        loadData();
+	        return;
+	    }
+
+	    // Convert java.util.Date to Timestamp for comparison
+	    Timestamp fromTimestamp = new Timestamp(fromDate.getTime());
+	    Timestamp toTimestamp = new Timestamp(toDate.getTime());
+
+	    // Ensure "To" date is not before "From" date
+	    if (toTimestamp.before(fromTimestamp)) {
+	        JOptionPane.showMessageDialog(null, "Ngày 'Đến' phải sau ngày 'Từ'.");
+	        txtNgayCheckOut.setDate(null); // Reset "To" date
+	        loadData();
+	        return;
+	    }
+
+	    // Fetch all transactions
+	    GiaoDich_DAO giaoDichDAO = new GiaoDich_DAO();
+	    List<GiaoDich> listGiaoDich;
+	    try {
+	        listGiaoDich = giaoDichDAO.getAllGiaoDich();
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return;
+	    }
+
+	    // Clear the table
+	    DefaultTableModel model = (DefaultTableModel) tbDanhSachDatPhong.getModel();
+	    model.setRowCount(0);
+
+	    // Filter transactions within the date range
+	    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+	    for (GiaoDich giaoDich : listGiaoDich) {
+	        java.util.Date thoiGian = giaoDich.getThoiGianGiaoDich();
+	        if (thoiGian != null && !thoiGian.before(fromTimestamp) && !thoiGian.after(toTimestamp)) {
+	            NhanVien nhanVien = giaoDich.getNhanVien();
+	            KhachHang khachHang = giaoDich.getKhachHang();
+
+	            String maNhanVien = nhanVien != null ? nhanVien.getMaNHanVien() : "Không xác định";
+	            String maKhachHang = khachHang != null ? khachHang.getMaKhachHang() : "Không xác định";
+	            String thoiGianStr = dateFormat.format(thoiGian);
+
+	            Object[] row = {
+	                giaoDich.getMaGiaoDich(),
+	                giaoDich.getTongTien(),
+	                thoiGianStr,
+	                maNhanVien,
+	                maKhachHang
+	            };
+	            model.addRow(row);
+	        }
+	    }
+
+	    if (model.getRowCount() == 0) {
+	        JOptionPane.showMessageDialog(null, "Không có giao dịch nào trong khoảng thời gian này.");
+	    }
+	}
 	
 
 	// Variables declaration - do not modify//GEN-BEGIN:variables
