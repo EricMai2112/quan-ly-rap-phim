@@ -1,11 +1,12 @@
 package MODEL;
 
+//import java.sql.Timestamp;
 import java.util.Date;
 
 public class GiaoDich {
 	private String maGiaoDich;
 	private Double tongTien;
-	private java.util.Date thoiGianGiaoDich;
+	private Date thoiGianGiaoDich;
 	private NhanVien nhanVien;
 	private KhachHang khachHang;
 	public GiaoDich() {
@@ -31,10 +32,10 @@ public class GiaoDich {
 	public void setTongTien(Double tongTien) {
 		this.tongTien = tongTien;
 	}
-	public java.util.Date getThoiGianGiaoDich() {
+	public Date getThoiGianGiaoDich() {
 		return thoiGianGiaoDich;
 	}
-	public void setThoiGianGiaoDich(java.util.Date thoiGianGiaoDich) {
+	public void setThoiGianGiaoDich(Date thoiGianGiaoDich) {
 		this.thoiGianGiaoDich = thoiGianGiaoDich;
 	}
 	public NhanVien getNhanVien() {
