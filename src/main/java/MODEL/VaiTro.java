@@ -15,4 +15,7 @@ public enum VaiTro {
     public String toString() {
         return vaiTro;
     }
+	 public String getDbValue() {
+	        return this.name(); // trả về đúng giá trị THU_NGAN, QUAN_LY cho database
+	    }
 }
