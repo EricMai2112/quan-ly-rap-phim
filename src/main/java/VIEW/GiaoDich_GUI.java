@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -20,12 +22,14 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 import com.itextpdf.layout.Document;
 
 import CONTROL.GiaoDich_DAO;
+import Components.ExportFile1;
 import MODEL.GiaoDich;
 import MODEL.KhachHang;
 import MODEL.NhanVien;
@@ -213,7 +217,8 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 		add(jPanel1, "card2");
 		btnXuatFile.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
-				xuatFilePDF();
+				ExportFile1 exporter = new ExportFile1();
+				exporter.exportToPDF(tbDanhSachDatPhong);
 			}
 		});
 		btnTimKiem.addActionListener(new ActionListener() {
@@ -315,42 +320,38 @@ public class GiaoDich_GUI extends javax.swing.JPanel {
 
 	}
 
-	public void xuatFilePDF() {
-		try {
-			JFileChooser fileChooser = new JFileChooser();
-			fileChooser.setDialogTitle("Lưu file dưới dạng PDF (giả lập)");
-			int userSelection = fileChooser.showSaveDialog(this);
 
-			if (userSelection == JFileChooser.APPROVE_OPTION) {
-				File fileToSave = fileChooser.getSelectedFile();
-				// Nếu chưa có .pdf ở cuối, tự thêm
-				if (!fileToSave.getName().toLowerCase().endsWith(".pdf")) {
-					fileToSave = new File(fileToSave.getAbsolutePath() + ".pdf");
-				}
+//	public class ExportFile1 {
+//	    public void exportToPDF(JTable table) {
+//	        try {
+//	            FileWriter writer = new FileWriter("C:\\Users\\huynh\\OneDrive\\Desktop\\HoaDon\\hoaDon1.pdf");
+//
+//	            // Ghi tiêu đề
+//	            writer.write("DANH SÁCH HÓA ĐƠN\n\n");
+//
+//	            // Ghi tiêu đề cột
+//	            for (int i = 0; i < table.getColumnCount(); i++) {
+//	                writer.write(table.getColumnName(i) + "\t");
+//	            }
+//	            writer.write("\n");
+//
+//	            // Ghi dữ liệu dòng
+//	            for (int i = 0; i < table.getRowCount(); i++) {
+//	                for (int j = 0; j < table.getColumnCount(); j++) {
+//	                    Object value = table.getValueAt(i, j);
+//	                    writer.write((value != null ? value.toString() : "") + "\t");
+//	                }
+//	                writer.write("\n");
+//	            }
+//
+//	            writer.close();
+//	            System.out.println("Đã xuất file hoadon.pdf thành công!");
+//	        } catch (IOException e) {
+//	            e.printStackTrace();
+//	        }
+//	    }
+//	}
 
-				PrintWriter writer = new PrintWriter(fileToSave, "UTF-8");
-
-				// Tiêu đề
-				writer.println("DANH SÁCH GIAO DỊCH");
-				writer.println("==============================");
-
-				// Duyệt dữ liệu bảng
-				for (int i = 0; i < tbDanhSachDatPhong.getRowCount(); i++) {
-					writer.println("Mã giao dịch: " + tbDanhSachDatPhong.getValueAt(i, 0));
-					writer.println("Tổng tiền   : " + tbDanhSachDatPhong.getValueAt(i, 1));
-					writer.println("Thời gian   : " + tbDanhSachDatPhong.getValueAt(i, 2));
-					writer.println("Nhân viên   : " + tbDanhSachDatPhong.getValueAt(i, 3));
-					writer.println("Khách hàng  : " + tbDanhSachDatPhong.getValueAt(i, 4));
-					writer.println("------------------------------");
-				}
-
-				writer.close();
-				JOptionPane.showMessageDialog(this, "Xuất file thành công: " + fileToSave.getAbsolutePath());
-			}
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Xuất file thất bại: " + e.getMessage());
-		}
-	}
 	private void filterByDateRange() {
 		java.util.Date fromDate = txtNgayCheckIn.getDate();
 	    java.util.Date toDate = txtNgayCheckOut.getDate();
