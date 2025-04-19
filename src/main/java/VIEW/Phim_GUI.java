@@ -214,7 +214,7 @@ public class Phim_GUI extends javax.swing.JPanel {
         );
 
         add(jPanel1, "card2");
-       
+        
         btnThemPhim.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -337,8 +337,7 @@ public class Phim_GUI extends javax.swing.JPanel {
 
 	    addDialog.setVisible(true);
 	}
-	
-	
+
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

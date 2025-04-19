@@ -11,10 +11,6 @@ public class NhanVien {
 	private String cccd;
 	private VaiTro vaiTro;
 	
-	public NhanVien() {
-		
-	}
-	
 	public NhanVien(String maNHanVien, String hoTen, Date ngaySinh, String soDienThoai, String cccd, VaiTro vaiTro) {
 		super();
 		this.maNHanVien = maNHanVien;
@@ -25,6 +21,10 @@ public class NhanVien {
 		this.vaiTro = vaiTro;
 	}
 	
+	public NhanVien() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public String getMaNHanVien() {
 		return maNHanVien;
 	}

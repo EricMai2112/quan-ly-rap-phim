@@ -44,6 +44,11 @@ import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.PhongChieu_DAO;
+import MODEL.PhongChieu;
+
+
+
 
 /**
  *
@@ -56,8 +61,14 @@ public class PhongChieu_GUI extends javax.swing.JPanel {
 	public PhongChieu_GUI() {
 		initComponents();
 		updateHeader();
+		loadData();            
+	    addEventHandlers();
 
 	}
+	
+	// import control.PhongChieu_DAO; ở đầu file
+	private final PhongChieu_DAO phongChieuDAO = new PhongChieu_DAO();
+
 
 	/**
 	 * This method is called from within the constructor to initialize the form.
@@ -91,7 +102,7 @@ public class PhongChieu_GUI extends javax.swing.JPanel {
         tbNhanVien.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {},
             new String [] {
-                "Mã nhân viên", "Tên nhân viên", "Loại", "Phái", "Ngày sinh", "Số điện thoại"
+                "Mã phòng chiếu", "Tên phòng chiếu", "Số lượng người"
             }
         ) {
             Class[] types = new Class [] {
@@ -210,10 +221,206 @@ public class PhongChieu_GUI extends javax.swing.JPanel {
         add(jPanel1, "card2");
     }// </editor-fold>//GEN-END:initComponents
 
+	/** Khởi tạo model cho JTable */
+	private void initTableModel() {
+	    DefaultTableModel model = new DefaultTableModel(
+	        new Object[][] {},
+	        new String[] { "Mã phòng", "Tên phòng", "Số lượng người" }
+	    ) {
+	        Class<?>[] types = new Class[] { String.class, String.class, Integer.class };
+	        @Override
+	        public Class<?> getColumnClass(int columnIndex) {
+	            return types[columnIndex];
+	        }
+	        @Override
+	        public boolean isCellEditable(int row, int column) {
+	            return false; // Không cho sửa trực tiếp trong bảng
+	        }
+	    };
+	    tbNhanVien.setModel(model);
+	    tbNhanVien.setRowHeight(40);
+	}
+    
+	/** Load lại toàn bộ dữ liệu từ DAO vào JTable */
+	private void loadData() {
+	    DefaultTableModel model = (DefaultTableModel) tbNhanVien.getModel();
+	    model.setRowCount(0); // Xoá hết dòng cũ
+	    List<PhongChieu> list = PhongChieu_DAO.getAllPhongChieu();
+	    for (PhongChieu pc : list) {
+	        model.addRow(new Object[]{
+	            pc.getMaPhong(),
+	            pc.getTenPhong(),
+	            pc.getSoLuongNguoi()
+	        });
+	    }
+	}
+
+    
+	/** Gắn sự kiện cho 3 nút Thêm, Xóa, Cập nhật */
+	private void addEventHandlers() {
+	    // Thêm phòng
+		btnThemPhongChieu.addMouseListener(new MouseAdapter() {
+		    public void mouseClicked(MouseEvent e) {
+		        showAddDialog();
+		    }
+		});
+
+
+	    // Xóa phòng
+	    btnXoa.addMouseListener(new MouseAdapter() {
+	        @Override
+	        public void mouseClicked(MouseEvent e) {
+	            int row = tbNhanVien.getSelectedRow();
+	            if (row < 0) {
+	                JOptionPane.showMessageDialog(PhongChieu_GUI.this,
+	                    "Vui lòng chọn phòng để xóa.", "Thông báo",
+	                    JOptionPane.WARNING_MESSAGE);
+	                return;
+	            }
+	            String ma = tbNhanVien.getValueAt(row, 0).toString();
+	            int confirm = JOptionPane.showConfirmDialog(PhongChieu_GUI.this,
+	                "Bạn có chắc muốn xóa phòng " + ma + "?", "Xác nhận",
+	                JOptionPane.YES_NO_OPTION);
+	            if (confirm == JOptionPane.YES_OPTION) {
+	                if (PhongChieu_DAO.deletePhongChieu(ma)) {
+	                    JOptionPane.showMessageDialog(PhongChieu_GUI.this,
+	                        "Xóa thành công.", "Thông báo",
+	                        JOptionPane.INFORMATION_MESSAGE);
+	                    loadData(); // Load lại bảng
+	                } else {
+	                    JOptionPane.showMessageDialog(PhongChieu_GUI.this,
+	                        "Xóa thất bại.", "Lỗi",
+	                        JOptionPane.ERROR_MESSAGE);
+	                }
+	            }
+	        }
+	    });
+
+	    // Cập nhật phòng
+	    btnCapNhat.addMouseListener(new MouseAdapter() {
+	        @Override
+	        public void mouseClicked(MouseEvent e) {
+	            int row = tbNhanVien.getSelectedRow();
+	            if (row < 0) {
+	                JOptionPane.showMessageDialog(PhongChieu_GUI.this,
+	                    "Vui lòng chọn phòng để cập nhật.", "Thông báo",
+	                    JOptionPane.WARNING_MESSAGE);
+	                return;
+	            }
+	            String ma = tbNhanVien.getValueAt(row, 0).toString();
+	            String ten = tbNhanVien.getValueAt(row, 1).toString();
+	            String soStr = tbNhanVien.getValueAt(row, 2).toString();
+	            showUpdateDialog(ma, ten, soStr);
+	        }
+	    });
+	}
+
+	/** Hiển thị dialog thêm mới phòng chiếu */
+	private void showAddDialog() {
+	    JTextField txtMa = new JTextField();
+	    JTextField txtTen = new JTextField();
+	    JTextField txtSo = new JTextField();
+
+	    ((AbstractDocument) txtSo.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+
+	    Object[] fields = {
+	        "Mã phòng:", txtMa,
+	        "Tên phòng:", txtTen,
+	        "Số lượng người:", txtSo
+	    };
+
+	    int option = JOptionPane.showConfirmDialog(
+	        this, fields, "Thêm phòng chiếu", JOptionPane.OK_CANCEL_OPTION
+	    );
+	    if (option == JOptionPane.OK_OPTION) {
+	        String ma = txtMa.getText().trim();
+	        String ten = txtTen.getText().trim();
+	        String so = txtSo.getText().trim();
+
+	        if (ma.isEmpty() || ten.isEmpty() || so.isEmpty()) {
+	            JOptionPane.showMessageDialog(this,
+	                "Không được để trống.", "Lỗi",
+	                JOptionPane.ERROR_MESSAGE);
+	            return;
+	        }
+
+	        PhongChieu pc = new PhongChieu(ma, ten, Integer.parseInt(so));
+	        if (PhongChieu_DAO.addPhongChieu(pc)) {
+	            JOptionPane.showMessageDialog(this,
+	                "Thêm thành công.", "Thông báo",
+	                JOptionPane.INFORMATION_MESSAGE);
+	            loadData(); // Load lại bảng
+	        } else {
+	            JOptionPane.showMessageDialog(this,
+	                "Thêm thất bại. Có thể mã đã tồn tại.", "Lỗi",
+	                JOptionPane.ERROR_MESSAGE);
+	        }
+	    }
+	}
+
+	/** Hiển thị dialog cập nhật phòng chiếu */
+	private void showUpdateDialog(String ma, String tenCu, String soCu) {
+	    JTextField txtTen = new JTextField(tenCu);
+	    JTextField txtSo = new JTextField(soCu);
+	    ((AbstractDocument) txtSo.getDocument()).setDocumentFilter(new NumericDocumentFilter());
+
+	    Object[] fields = {
+	        "Tên phòng:", txtTen,
+	        "Số lượng người:", txtSo
+	    };
+
+	    int option = JOptionPane.showConfirmDialog(
+	        this, fields, "Cập nhật phòng chiếu", JOptionPane.OK_CANCEL_OPTION
+	    );
+	    if (option == JOptionPane.OK_OPTION) {
+	        String tenMoi = txtTen.getText().trim();
+	        String soMoi = txtSo.getText().trim();
+
+	        if (tenMoi.isEmpty() || soMoi.isEmpty()) {
+	            JOptionPane.showMessageDialog(this,
+	                "Không được để trống.", "Lỗi",
+	                JOptionPane.ERROR_MESSAGE);
+	            return;
+	        }
+
+	        PhongChieu pc = new PhongChieu(ma, tenMoi, Integer.parseInt(soMoi));
+	        if (PhongChieu_DAO.updatePhongChieu(pc)) {
+	            JOptionPane.showMessageDialog(this,
+	                "Cập nhật thành công.", "Thông báo",
+	                JOptionPane.INFORMATION_MESSAGE);
+	            loadData(); // Load lại bảng
+	        } else {
+	            JOptionPane.showMessageDialog(this,
+	                "Cập nhật thất bại.", "Lỗi",
+	                JOptionPane.ERROR_MESSAGE);
+	        }
+	    }
+	}
+	
 	private void updateHeader() {
 		JTableHeader header = tbNhanVien.getTableHeader();
 		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
 	}
+	
+	
+	/** Chỉ cho phép nhập số */
+    private static class NumericDocumentFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+                throws javax.swing.text.BadLocationException {
+            if (string != null && string.matches("\\d*")) {
+                super.insertString(fb, offset, string, attr);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                throws javax.swing.text.BadLocationException {
+            if (text != null && text.matches("\\d*")) {
+                super.replace(fb, offset, length, text, attrs);
+            }
+        }
+    }
 
 
 
@@ -339,29 +546,8 @@ public class PhongChieu_GUI extends javax.swing.JPanel {
 				JOptionPane.INFORMATION_MESSAGE);
 		return true;
 	}
-
-	private static class NumericDocumentFilter extends DocumentFilter {
-		@Override
-		public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
-				throws BadLocationException {
-			if (string != null && string.matches("\\d*")) { // Check if input is numeric
-				super.insertString(fb, offset, string, attr);
-			}
-		}
-
-		@Override
-		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-				throws BadLocationException {
-			if (text != null && text.matches("\\d*")) { // Check if input is numeric
-				super.replace(fb, offset, length, text, attrs);
-			}
-		}
-
-		@Override
-		public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
-			super.remove(fb, offset, length);
-		}
-	}
+	
+	
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel btnCapNhat;

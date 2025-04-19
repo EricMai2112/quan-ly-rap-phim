@@ -4,7 +4,8 @@
  */
 package VIEW;
 
-
+import CONTROL.TaiKhoan_DAO;
+import VIEW.SignUP_GUI;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -17,8 +18,11 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
+
+import org.netbeans.lib.awtextra.AbsoluteLayout;
 
 /**
  *
@@ -56,6 +60,7 @@ public class Login_GUI extends javax.swing.JFrame {
         iconEyeShow = new javax.swing.JLabel();
         txtPassword = new javax.swing.JPasswordField();
         btnLogin = new javax.swing.JButton();
+        btnSignUp = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -92,6 +97,19 @@ public class Login_GUI extends javax.swing.JFrame {
             }
         });
         jPanel2.add(labelQuenMatKhau, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 320, 110, 27));
+        
+     // ★ thay vì đặt ngang thì đặt dọc bên dưới btnLogin:
+        btnSignUp = new javax.swing.JButton();
+        btnSignUp.setText("Sign Up");
+        btnSignUp.setFont(new java.awt.Font("Segoe UI", 1, 18));
+        btnSignUp.setBackground(new java.awt.Color(100, 200, 100));
+        btnSignUp.setForeground(new java.awt.Color(255, 255, 255));
+        btnSignUp.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSignUp.addActionListener(evt -> {
+            new SignUP_GUI().setVisible(true);
+        });
+        // đưa SignUp xuống 60px (50px height + 10px gap) so với Login
+        jPanel2.add(btnSignUp, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 420, 310, 50));
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel4.setText("Password");
@@ -186,10 +204,27 @@ public class Login_GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_iconEyeHideMouseClicked
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-        Home_GUI home = new Home_GUI();
-        home.setVisible(true);
+    	String user = txtUserName.getText().trim();
+        String pass = new String(txtPassword.getPassword());
+        TaiKhoan_DAO dao = new TaiKhoan_DAO();
 
-        this.dispose();  // Đóng cửa sổ login
+        if (user.isEmpty() || pass.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Vui lòng nhập đầy đủ thông tin",
+                "Lỗi đăng nhập",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (dao.kiemTraDangNhap(user, pass)) {
+            new Home_GUI().setVisible(true);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this,
+                "Tên đăng nhập hoặc mật khẩu không đúng",
+                "Lỗi đăng nhập",
+                JOptionPane.ERROR_MESSAGE);
+        }
 
 
     }
@@ -200,58 +235,89 @@ public class Login_GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_labelQuenMatKhauMouseClicked
 
     public void showForgotPasswordDialog() {
-    	JFrame frameForgotPassword = new JFrame("Quên mật khẩu");
-    	JPanel panel = new JPanel();
-    	frameForgotPassword.setLocationRelativeTo(null);
-    	frameForgotPassword.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    	frameForgotPassword.setSize(350, 100);
+        JFrame frame = new JFrame("Quên mật khẩu");
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        frame.setSize(350, 150);
+        frame.setLocationRelativeTo(this);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-    	// Sử dụng FlowLayout để các thành phần không xuống dòng
-    	panel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));  // Các thành phần nằm ngang hàng với khoảng cách giữa các phần tử là 10px
+        JLabel lbl = new JLabel("Tên đăng nhập:");
+        JTextField tfUser = new JTextField(15);
+        JButton btnSubmit = new JButton("OK");
 
-    	// Tên người dùng hoặc email
-    	JLabel labelUsername = new JLabel("Nhập Email:");
-    	labelUsername.setFont(new java.awt.Font("Segoe UI", 1, 14));
-    	JTextField tfUsernameOrEmail = new JTextField(15);
-    	panel.add(labelUsername);
-    	panel.add(tfUsernameOrEmail);
+        panel.add(lbl);
+        panel.add(tfUser);
+        panel.add(btnSubmit);
+        frame.add(panel);
+        frame.setVisible(true);
 
-    	// Nút xác nhận
-    	JButton btnSubmit = new JButton("Gửi");
-    	btnSubmit.setBackground(new java.awt.Color(25, 159, 254));
-    	btnSubmit.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-    	btnSubmit.setForeground(new java.awt.Color(255, 255, 255));
-    	btnSubmit.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSubmit.addActionListener(e -> {
+            String user = tfUser.getText().trim();
+            TaiKhoan_DAO dao = new TaiKhoan_DAO();
 
-    	// Thêm hành động khi nhấn nút Gửi (nếu cần)
-//    	btnSubmit.addActionListener(new ActionListener() {
-//    	    @Override
-//    	    public void actionPerformed(ActionEvent e) {
-//    	        String email = tfUsernameOrEmail.getText();
-//    	        
-//    	        if (email.isEmpty()) {
-//    	            JOptionPane.showMessageDialog(frameForgotPassword, "Vui lòng nhập email của bạn.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-//    	        } else {
-//    	            // Gọi lớp DAO để kiểm tra email và xử lý quên mật khẩu
-//    	            TaiKhoan_DAO dao = new TaiKhoan_DAO();
-//    	            if (dao.isEmailExist(email)) {
-//    	                // Nếu email tồn tại, gửi email reset mật khẩu
-//    	                dao.sendResetPasswordEmail(email);
-//    	                JOptionPane.showMessageDialog(frameForgotPassword, "Liên kết đặt lại mật khẩu đã được gửi đến email của bạn.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-//    	            } else {
-//    	                JOptionPane.showMessageDialog(frameForgotPassword, "Email không tồn tại trong hệ thống.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-//    	            }
-//    	        }
-//    	    }
-//    	});
+            if (user.isEmpty()) {
+                JOptionPane.showMessageDialog(frame,
+                    "Vui lòng nhập tên đăng nhập",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (!dao.isUsernameExist(user)) {
+                JOptionPane.showMessageDialog(frame,
+                    "Tên đăng nhập không tồn tại",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-    	panel.add(btnSubmit);
+            // Nhập mật khẩu mới và xác nhận
+            JPanel passPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+            passPanel.add(new JLabel("Mật khẩu mới:"));
+            JPasswordField pf1 = new JPasswordField(15);
+            passPanel.add(pf1);
+            passPanel.add(new JLabel("Nhập lại mật khẩu:"));
+            JPasswordField pf2 = new JPasswordField(15);
+            passPanel.add(pf2);
 
-    	// Thêm panel vào frame
-    	frameForgotPassword.add(panel);
-    	frameForgotPassword.setVisible(true);
-
+            int option = JOptionPane.showConfirmDialog(frame,
+                passPanel,
+                "Đặt lại mật khẩu",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
+            if (option == JOptionPane.OK_OPTION) {
+                String p1 = new String(pf1.getPassword()).trim();
+                String p2 = new String(pf2.getPassword()).trim();
+                if (p1.isEmpty() || p2.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame,
+                        "Vui lòng nhập đầy đủ mật khẩu",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                if (!p1.equals(p2)) {
+                    JOptionPane.showMessageDialog(frame,
+                        "Mật khẩu không khớp",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                boolean ok = dao.capNhatMatKhau(user, p1);
+                if (ok) {
+                    JOptionPane.showMessageDialog(frame,
+                        "Cập nhật mật khẩu thành công",
+                        "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    frame.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(frame,
+                        "Cập nhật mật khẩu thất bại",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
     }
+
     /**
      * @param args the command line arguments
      */
@@ -290,6 +356,7 @@ public class Login_GUI extends javax.swing.JFrame {
 //    Dem
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLogin;
+    private javax.swing.JButton btnSignUp;
     private javax.swing.JLabel iconEyeHide;
     private javax.swing.JLabel iconEyeShow;
     private javax.swing.JLabel jLabel1;

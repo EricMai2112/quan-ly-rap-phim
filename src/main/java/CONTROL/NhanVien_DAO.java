@@ -2,6 +2,7 @@ package CONTROL;
 
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,6 +48,7 @@ public class NhanVien_DAO {
 
 		return listNhanVien;
 	}
+	
 	public NhanVien getNhanVienByMa(String maNV) {
 		Connection con = connectDB.getConnection();
 		String sql = "SELECT * FROM NhanVien WHERE maNhanVien = ?";
@@ -68,4 +70,37 @@ public class NhanVien_DAO {
 		}
 		return null;
 	}
+	
+	// Sinh mã NV mới
+	public String generateMaNhanVien() {
+		Connection con = connectDB.getConnection();
+	    String prefix = "NV";
+	    String sql = "SELECT TOP 1 maNhanVien FROM NhanVien WHERE maNhanVien LIKE 'NV%' ORDER BY maNhanVien DESC";
+	    try (PreparedStatement stmt = con.prepareStatement(sql);
+	         ResultSet rs = stmt.executeQuery()) {
+	        if (rs.next()) {
+	            String last = rs.getString(1); // e.g. "NV012"
+	            int num = Integer.parseInt(last.substring(2));
+	            return prefix + String.format("%03d", num+1);
+	        }
+	    } catch (SQLException e) { e.printStackTrace(); }
+	    return prefix + "001";
+	}
+
+	// Thêm nhân viên mới
+	public boolean themNhanVien(NhanVien nv) {
+		Connection conn = connectDB.getConnection();
+	    String sql = "INSERT INTO NhanVien(maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro) VALUES(?,?,?,?,?,?)";
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setString(1, nv.getMaNHanVien());
+	        stmt.setString(2, nv.getHoTen());
+	        stmt.setDate(3, new java.sql.Date(nv.getNgaySinh().getTime()));
+	        stmt.setString(4, nv.getSoDienThoai());
+	        stmt.setString(5, nv.getCccd());
+	        stmt.setString(6, nv.getVaiTro().toString());
+	        return stmt.executeUpdate() > 0;
+	    } catch (SQLException e) { e.printStackTrace(); return false; }
+	}
+
+
 }
