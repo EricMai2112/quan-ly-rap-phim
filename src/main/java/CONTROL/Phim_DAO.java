@@ -30,12 +30,10 @@ public class Phim_DAO {
 	            phim.setThoiLuong(resultSet.getInt("thoiLuong"));
 	            phim.setTheLoai(resultSet.getString("theLoai"));
 
-	            // Xử lý trạng thái phim
 	            String trangThaiStr = resultSet.getString("trangThaiPhim");
 	            TrangThaiPhim trangThai = TrangThaiPhim.valueOf(trangThaiStr);
 	            phim.setTrangThaiPhim(trangThai);
 
-	            // Lấy link ảnh
 	            phim.setHinhAnh(resultSet.getString("hinhAnh"));
 
 	            listPhim.add(phim);
@@ -58,7 +56,7 @@ public class Phim_DAO {
 	        stmt.setInt(3, phim.getThoiLuong());
 	        stmt.setString(4, phim.getTheLoai());
 	        stmt.setString(5, phim.getTrangThaiPhim().name());
-	        stmt.setString(6, phim.getHinhAnh()); // Lưu link ảnh
+	        stmt.setString(6, phim.getHinhAnh());
 
 	        return stmt.executeUpdate() > 0;
 	    } catch (SQLException e) {
@@ -67,12 +65,8 @@ public class Phim_DAO {
 	    return false;
 	}
 
-	/**
-	 * Lấy thông tin Phim theo mã
-	 */
 	public static Phim getPhimById(String maPhim) {
-	    String sql = "SELECT maPhim, tenPhim, thoiLuong, theLoai, trangThaiPhim, hinhAnh "
-	               + "FROM Phim WHERE maPhim = ?";
+	    String sql = "SELECT maPhim, tenPhim, thoiLuong, theLoai, trangThaiPhim, hinhAnh FROM Phim WHERE maPhim = ?";
 	    try (Connection conn = connectDB.getConnection();
 	         PreparedStatement stmt = conn.prepareStatement(sql)) {
 	        
@@ -84,7 +78,6 @@ public class Phim_DAO {
 	                phim.setTenPhim(rs.getString("tenPhim"));
 	                phim.setThoiLuong(rs.getInt("thoiLuong"));
 	                phim.setTheLoai(rs.getString("theLoai"));
-	                // Chuyển chuỗi trạng thái thành enum
 	                TrangThaiPhim tt = TrangThaiPhim.valueOf(rs.getString("trangThaiPhim"));
 	                phim.setTrangThaiPhim(tt);
 	                phim.setHinhAnh(rs.getString("hinhAnh"));
@@ -97,5 +90,36 @@ public class Phim_DAO {
 	    return null;
 	}
 
+	public boolean deletePhim(String maPhim) {
+	    String sql = "DELETE FROM Phim WHERE maPhim = ?";
+
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setString(1, maPhim);
+	        return stmt.executeUpdate() > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false;
+	}
 	
+	public boolean updatePhim(Phim phim) {
+        String sql = "UPDATE Phim SET tenPhim = ?, thoiLuong = ?, theLoai = ?, trangThaiPhim = ?, hinhAnh = ? WHERE maPhim = ?";
+
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, phim.getTenPhim());
+            stmt.setInt(2, phim.getThoiLuong());
+            stmt.setString(3, phim.getTheLoai());
+            stmt.setString(4, phim.getTrangThaiPhim().name());
+            stmt.setString(5, phim.getHinhAnh());
+            stmt.setString(6, phim.getMaPhim());
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

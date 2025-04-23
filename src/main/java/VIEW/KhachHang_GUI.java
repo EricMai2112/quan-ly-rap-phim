@@ -10,6 +10,7 @@ import javax.swing.text.DocumentFilter.FilterBypass;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -44,6 +45,11 @@ import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.KhachHang_DAO;
+import CONTROL.SanPhamDichVu_DAO;
+import MODEL.KhachHang;
+import MODEL.SanPham;
+
 
 /**
  *
@@ -56,7 +62,7 @@ public class KhachHang_GUI extends javax.swing.JPanel {
 	public KhachHang_GUI() {
 		initComponents();
 		updateHeader();
-
+		loadKhachHangToTable();
 	}
 
 	/**
@@ -73,13 +79,13 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         titleHoaDon = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tbNhanVien = new javax.swing.JTable();
+        tbKhachHang = new javax.swing.JTable();
         btnXoa = new javax.swing.JPanel();
         lbXoa = new javax.swing.JLabel();
         btnCapNhat = new javax.swing.JPanel();
         lbCapNhat = new javax.swing.JLabel();
-        btnThemNhanvien = new javax.swing.JPanel();
-        lbThemNhanVien = new javax.swing.JLabel();
+        btnThemKhachHang = new javax.swing.JPanel();
+        lbThemKhachHang = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout());
 
@@ -88,22 +94,22 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         titleHoaDon.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         titleHoaDon.setText("Danh sách khách hàng");
 
-        tbNhanVien.setModel(new javax.swing.table.DefaultTableModel(
+        tbKhachHang.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {},
             new String [] {
-                "Mã nhân viên", "Tên nhân viên", "Loại", "Phái", "Ngày sinh", "Số điện thoại"
+                "Mã khách hàng", "Tên khách hàng", "Số điện thoại", "Email"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
         });
-        tbNhanVien.setRowHeight(40);
-        jScrollPane1.setViewportView(tbNhanVien);
+        tbKhachHang.setRowHeight(40);
+        jScrollPane1.setViewportView(tbKhachHang);
 
         btnXoa.setBackground(new java.awt.Color(255, 0, 0));
         btnXoa.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -151,28 +157,28 @@ public class KhachHang_GUI extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        btnThemNhanvien.setBackground(new java.awt.Color(25, 159, 254));
-        btnThemNhanvien.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnThemKhachHang.setBackground(new java.awt.Color(25, 159, 254));
+        btnThemKhachHang.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
-        lbThemNhanVien.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lbThemNhanVien.setForeground(new java.awt.Color(255, 255, 255));
-        lbThemNhanVien.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lbThemNhanVien.setText("Thêm khách hàng");
+        lbThemKhachHang.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lbThemKhachHang.setForeground(new java.awt.Color(255, 255, 255));
+        lbThemKhachHang.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lbThemKhachHang.setText("Thêm khách hàng");
 
-        javax.swing.GroupLayout btnThemNhanvienLayout = new javax.swing.GroupLayout(btnThemNhanvien);
-        btnThemNhanvien.setLayout(btnThemNhanvienLayout);
+        javax.swing.GroupLayout btnThemNhanvienLayout = new javax.swing.GroupLayout(btnThemKhachHang);
+        btnThemKhachHang.setLayout(btnThemNhanvienLayout);
         btnThemNhanvienLayout.setHorizontalGroup(
             btnThemNhanvienLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(btnThemNhanvienLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lbThemNhanVien)
+                .addComponent(lbThemKhachHang)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         btnThemNhanvienLayout.setVerticalGroup(
             btnThemNhanvienLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, btnThemNhanvienLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(lbThemNhanVien)
+                .addComponent(lbThemKhachHang)
                 .addContainerGap())
         );
 
@@ -190,7 +196,7 @@ public class KhachHang_GUI extends javax.swing.JPanel {
                         .addGap(18, 18, 18)
                         .addComponent(btnCapNhat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(btnThemNhanvien, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(btnThemKhachHang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -202,29 +208,337 @@ public class KhachHang_GUI extends javax.swing.JPanel {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(btnCapNhat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnXoa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnThemNhanvien, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnThemKhachHang, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(12, 12, 12)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE))
         );
 
         add(jPanel1, "card2");
+        btnThemKhachHang.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		showAddSanPhamDialog();
+        	}
+		});
+        
+        btnCapNhat.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		int selectRow = tbKhachHang.getSelectedRow();
+        		if (selectRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn khách hàng cần cập nhật!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+        		String maKhachHang = tbKhachHang.getValueAt(selectRow, 0).toString();
+
+                // Lấy sản phẩm từ database thông qua DAO
+                KhachHang_DAO dao = new KhachHang_DAO();
+                KhachHang khachHang = dao.getKhachHangByMa(maKhachHang);
+
+                if (khachHang == null) {
+                    JOptionPane.showMessageDialog(null, "Không tìm thấy khách hàng để cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Gọi phương thức hiển thị dialog cập nhật
+                showUpdateKhachHangDialog(khachHang);
+        	}
+        });
+        
+        btnXoa.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                int selectedRow = tbKhachHang.getSelectedRow();
+                if (selectedRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn khách hàng cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Lấy mã sản phẩm từ dòng được chọn
+                String maKhachHang = tbKhachHang.getValueAt(selectedRow, 0).toString();
+
+                // Xác nhận trước khi xóa
+                int confirm = JOptionPane.showConfirmDialog(null, 
+                    "Bạn có chắc chắn muốn xóa khách hàng '" + maKhachHang + "' không?", 
+                    "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    KhachHang_DAO dao = new KhachHang_DAO();
+                    if (dao.deleteKhachHang(maKhachHang)) {
+                        JOptionPane.showMessageDialog(null, "Xóa khách hàng thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                        loadKhachHangToTable(); // Cập nhật lại bảng
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Xóa khách hàng thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+        
     }// </editor-fold>//GEN-END:initComponents
 
 	private void updateHeader() {
-		JTableHeader header = tbNhanVien.getTableHeader();
+		JTableHeader header = tbKhachHang.getTableHeader();
 		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
+	}
+	
+	public void loadKhachHangToTable() {
+	    KhachHang_DAO khachHangDao = new KhachHang_DAO();
+	    List<KhachHang> listKhachHang;
+	    try {
+	        listKhachHang = khachHangDao.getAllKhachHang();
+	    } catch (Exception e) {
+	        // Không hiển thị thông báo, chỉ trả về nếu có lỗi
+	        return;
+	    }
+
+	    DefaultTableModel model;
+	    try {
+	        model = (DefaultTableModel) tbKhachHang.getModel();
+	        model.setRowCount(0); // Xóa toàn bộ dòng hiện có
+	    } catch (Exception e) {
+	        // Không hiển thị thông báo, chỉ trả về nếu có lỗix
+	        return;
+	    }
+	    // Thêm dữ liệu mới vào bảng
+	    for (KhachHang khachHang : listKhachHang) {
+	        Object[] row = {
+	            khachHang.getMaKhachHang(),
+	            khachHang.getTenKhachHang(),
+	            khachHang.getSoDienThoai(),
+	            khachHang.getEmail(),
+	        };
+	        model.addRow(row);
+	    }
+	}
+	private boolean validData(String maKhachHang, String tenKhachHang, String sdt, String email, boolean isAddMode) {
+	    // Kiểm tra mã sản phẩm (chỉ áp dụng khi thêm mới)
+	    if (isAddMode && (maKhachHang == null || maKhachHang.trim().isEmpty())) {
+	        JOptionPane.showMessageDialog(null, "Mã khách hàng không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    // Kiểm tra tên sản phẩm
+	    if (tenKhachHang == null || tenKhachHang.trim().isEmpty()) {
+	        JOptionPane.showMessageDialog(null, "Tên khách hàng không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    // Kiểm tra danh mục
+	    if (sdt == null || !sdt.matches("^\\d{10,11}$")) {
+	        JOptionPane.showMessageDialog(null, "Số điện thoại phải có 10 hoặc 11 chữ số!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    // Kiểm tra số lượng
+	    if (email == null || !email.matches("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) {
+	        JOptionPane.showMessageDialog(null, "Email không hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        return false;
+	    }
+
+	    return true; // Dữ liệu hợp lệ
+	}
+	
+	private void showAddSanPhamDialog() {
+	    final JDialog addDialog = new JDialog(new JDialog((Frame) null, "Thêm khách hàng", true));
+	    addDialog.setSize(400, 300); // Giảm kích thước vì ít trường hơn
+	    addDialog.setLayout(new GridBagLayout());
+	    addDialog.setLocationRelativeTo(null);
+
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.insets = new Insets(5, 5, 5, 5);
+	    gbc.anchor = GridBagConstraints.WEST;
+
+	    // Tạo các nhãn và trường nhập liệu cho khách hàng
+	    JLabel lblMaKhachHang = new JLabel("Mã khách hàng:");
+	    JLabel lblTenKhachHang = new JLabel("Tên khách hàng:");
+	    JLabel lblSDT = new JLabel("Số điện thoại:");
+	    JLabel lblEmail = new JLabel("Email:");
+	    
+
+	    // Định dạng font cho nhãn
+	    lblMaKhachHang.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblTenKhachHang.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblSDT.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    lblEmail.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	 
+
+	    // Tạo các trường nhập liệu
+	    JTextField txtMaKhachHang = new JTextField(20);
+	    JTextField txtTenKhachHang = new JTextField(20);
+	    JTextField txtSDT = new JTextField(20);
+	    JTextField txtEmail = new JTextField(20);
+	   
+
+	    // Tạo các nút
+	    JButton btnXacNhan = new JButton("Xác Nhận");
+	    btnXacNhan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnXacNhan.setBackground(new java.awt.Color(25, 159, 254));
+	    btnXacNhan.setForeground(new java.awt.Color(255, 255, 255));
+	    btnXacNhan.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    JButton btnHuy = new JButton("Hủy");
+	    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnHuy.setBackground(new java.awt.Color(255, 0, 0));
+	    btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+	    btnHuy.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    // Đặt vị trí các thành phần trên dialog
+	    gbc.gridx = 0; gbc.gridy = 0; addDialog.add(lblMaKhachHang, gbc);
+	    gbc.gridx = 1; addDialog.add(txtMaKhachHang, gbc);
+	    gbc.gridx = 0; gbc.gridy = 1; addDialog.add(lblTenKhachHang, gbc);
+	    gbc.gridx = 1; addDialog.add(txtTenKhachHang, gbc);
+	    gbc.gridx = 0; gbc.gridy = 2; addDialog.add(lblSDT, gbc);
+	    gbc.gridx = 1; addDialog.add(txtSDT, gbc);
+	    gbc.gridx = 0; gbc.gridy = 3; addDialog.add(lblEmail, gbc);
+	    gbc.gridx = 1; addDialog.add(txtEmail, gbc);
+	
+	    gbc.gridx = 0; gbc.gridy = 5; addDialog.add(btnXacNhan, gbc);
+	    gbc.gridx = 1; addDialog.add(btnHuy, gbc);
+
+	    // Xử lý sự kiện nút "Xác Nhận"
+	    btnXacNhan.addActionListener(e -> {
+	    	try {
+	            String maKhachHang = txtMaKhachHang.getText().trim();
+	            String tenKhachHang = txtTenKhachHang.getText().trim();
+	            String sdt = txtSDT.getText().trim();
+	            String email = txtEmail.getText().trim();
+	        
+
+	            // Gọi hàm kiểm tra dữ liệu
+	            if (!validData(maKhachHang, tenKhachHang, sdt, email, true)) {
+	                return; // Dừng lại nếu dữ liệu không hợp lệ
+	            }
+
+	            // Tạo đối tượng SanPham
+	            KhachHang khachHang = new KhachHang(maKhachHang, tenKhachHang, sdt, email);
+	            KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+
+	            // Thêm sản phẩm vào cơ sở dữ liệu
+	            if (khachHangDAO.addKhachHang(khachHang)) {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm khách hàng thành công!");
+	                loadKhachHangToTable(); // Làm mới bảng sau khi thêm
+	                addDialog.dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm khách hàng thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (NumberFormatException ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Số điện thoại và Email phải là số hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        } catch (Exception ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            ex.printStackTrace();
+	        }
+	    });
+	    // Xử lý sự kiện nút "Hủy"
+	    
+	    btnHuy.addActionListener(e -> addDialog.dispose());
+
+	    addDialog.setVisible(true);  
+	  
+	}    
+	private void showUpdateKhachHangDialog(KhachHang khachHangUpdate) {
+		    final JDialog updateDialog = new JDialog(new JDialog((Frame) null, "Cập nhật khách hàng", true));
+		    updateDialog.setSize(400, 300);
+		    updateDialog.setLayout(new GridBagLayout());
+		    updateDialog.setLocationRelativeTo(null);
+
+		    GridBagConstraints gbc = new GridBagConstraints();
+		    gbc.insets = new Insets(5, 5, 5, 5);
+		    gbc.anchor = GridBagConstraints.WEST;
+
+		    JLabel lblMaKhachHang = new JLabel("Mã khách hàng:");
+		    JLabel lblTenKhachHang = new JLabel("Tên khách hàng:");
+		    JLabel lblSDT = new JLabel("Số điện thoại:");
+		    JLabel lblEmail = new JLabel("Email:");
+		   
+
+		    lblMaKhachHang.setFont(new Font("Times New Roman", Font.BOLD, 15));
+		    lblTenKhachHang.setFont(new Font("Times New Roman", Font.BOLD, 15));
+		    lblSDT.setFont(new Font("Times New Roman", Font.BOLD, 15));
+		    lblEmail.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+		    JTextField txtMaKhachHang = new JTextField(20);
+		    txtMaKhachHang.setText(khachHangUpdate.getMaKhachHang());
+		    txtMaKhachHang.setEditable(false); // không cho sửa mã
+
+		    JTextField txtTenKhachHang = new JTextField(20);
+		    txtTenKhachHang.setText(khachHangUpdate.getTenKhachHang());
+
+		    JTextField txtSDT = new JTextField(20);
+		    txtSDT.setText(khachHangUpdate.getSoDienThoai());
+
+		    JTextField txtEmail = new JTextField(20);
+		    txtEmail.setText(String.valueOf(khachHangUpdate.getEmail()));
+
+
+		    JButton btnCapNhat = new JButton("Cập Nhật");
+		    btnCapNhat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		    btnCapNhat.setBackground(new java.awt.Color(25, 159, 254));
+		    btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
+		    btnCapNhat.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+		    JButton btnHuy = new JButton("Hủy");
+		    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		    btnHuy.setBackground(new java.awt.Color(255, 0, 0));
+		    btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+		    btnHuy.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+		    gbc.gridx = 0; gbc.gridy = 0; updateDialog.add(lblMaKhachHang, gbc);
+		    gbc.gridx = 1; updateDialog.add(txtMaKhachHang, gbc);
+		    gbc.gridx = 0; gbc.gridy = 1; updateDialog.add(lblTenKhachHang, gbc);
+		    gbc.gridx = 1; updateDialog.add(txtTenKhachHang, gbc);
+		    gbc.gridx = 0; gbc.gridy = 2; updateDialog.add(lblSDT, gbc);
+		    gbc.gridx = 1; updateDialog.add(txtSDT, gbc);
+		    gbc.gridx = 0; gbc.gridy = 3; updateDialog.add(lblEmail, gbc);
+		    gbc.gridx = 1; updateDialog.add(txtEmail, gbc);
+
+		    gbc.gridx = 0; gbc.gridy = 5; updateDialog.add(btnCapNhat, gbc);
+		    gbc.gridx = 1; updateDialog.add(btnHuy, gbc);
+
+		    btnCapNhat.addActionListener(e -> {
+		    	try {
+		    		 String maKhachHang = txtMaKhachHang.getText().trim();
+			            String tenKhachHang = txtTenKhachHang.getText().trim();
+			            String sdt = txtSDT.getText().trim();
+			            String email = txtEmail.getText().trim();
+
+		            // Gọi hàm kiểm tra dữ liệu (không kiểm tra maSanPham trong chế độ cập nhật)
+		            if (!validData(null, tenKhachHang, sdt, email, false)) {
+		                return; // Dừng lại nếu dữ liệu không hợp lệ
+		            }
+
+		            // Cập nhật dữ liệu
+		            khachHangUpdate.setTenKhachHang(tenKhachHang);
+		            khachHangUpdate.setSoDienThoai(sdt);
+		            khachHangUpdate.setEmail(email);
+		            
+		            KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+
+		            if (khachHangDAO.updateKhachHang( khachHangUpdate)) {
+		                JOptionPane.showMessageDialog(updateDialog, "Cập nhật khách hàng thành công!");
+		                loadKhachHangToTable();
+		                updateDialog.dispose();
+		            } else {
+		                JOptionPane.showMessageDialog(updateDialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+		            }
+		        } catch (NumberFormatException ex) {
+		            JOptionPane.showMessageDialog(updateDialog, "Số điện thoại và Email phải là số hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+		        } catch (Exception ex) {
+		            JOptionPane.showMessageDialog(updateDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+		            ex.printStackTrace();
+		        }
+		    });
+		    btnHuy.addActionListener(e -> updateDialog.dispose());
+
+		    updateDialog.setVisible(true);
 	}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel btnCapNhat;
-    private javax.swing.JPanel btnThemNhanvien;
+    private javax.swing.JPanel btnThemKhachHang;
     private javax.swing.JPanel btnXoa;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lbCapNhat;
-    private javax.swing.JLabel lbThemNhanVien;
+    private javax.swing.JLabel lbThemKhachHang;
     private javax.swing.JLabel lbXoa;
-    private javax.swing.JTable tbNhanVien;
+    private javax.swing.JTable tbKhachHang;
     private javax.swing.JLabel titleHoaDon;
     // End of variables declaration//GEN-END:variables
 }

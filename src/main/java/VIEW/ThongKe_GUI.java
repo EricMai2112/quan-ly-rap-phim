@@ -3,11 +3,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package VIEW;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import javax.swing.JOptionPane;
@@ -20,6 +19,8 @@ import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import com.toedter.calendar.JDateChooser;
+
+import CONTROL.ThongKe_DAO;
 
 /**
  *
@@ -38,6 +39,13 @@ public class ThongKe_GUI extends javax.swing.JPanel {
         chartPanel.revalidate();
         setDefaultDatesAndShowTodayRevenue(); // Hiển thị doanh số của ngày hôm nay
 
+        // Lắng nghe sự kiện thay đổi ngày
+        txtNgayBatDau.addPropertyChangeListener("date", evt -> onDateChanged());
+        txtNgayKetThuc.addPropertyChangeListener("date", evt -> onDateChanged());
+        // Lắng nghe sự kiện thay đổi tháng
+        cboThang.addActionListener(e -> onMonthChanged());
+        // Lắng nghe sự kiện thay đổi năm
+        cboNam.addActionListener(e -> onYearChanged());
     }
 
     /**
@@ -151,7 +159,6 @@ public class ThongKe_GUI extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cboNam;
     private javax.swing.JComboBox<String> cboThang;
@@ -162,52 +169,52 @@ public class ThongKe_GUI extends javax.swing.JPanel {
     private com.toedter.calendar.JDateChooser txtNgayBatDau;
     private com.toedter.calendar.JDateChooser txtNgayKetThuc;
     // End of variables declaration//GEN-END:variables
-    
-// ===================================================================================================================================
- // Tạo biểu đồ từ dữ liệu
+
+    // Tạo biểu đồ từ dữ liệu
     private void createChart(String startDate, String endDate) {
-//        // Kiểm tra tham số
-//        if (startDate == null || endDate == null) {
-//            JOptionPane.showMessageDialog(this, "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//
-//        // Lấy dữ liệu từ ThongKe_DAO
-//        Map<String, Double> revenueData = ThongKe_DAO.getRevenueByDate(startDate, endDate);
-//
-//        if (revenueData.isEmpty()) {
-//            JOptionPane.showMessageDialog(this, "Không có dữ liệu trong khoảng ngày đã chọn.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-//            return;
-//        }
-//
-//        // Tạo dataset cho biểu đồ
-//        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-//        for (Map.Entry<String, Double> entry : revenueData.entrySet()) {
-//            dataset.addValue(entry.getValue(), "Doanh Thu", entry.getKey());
-//        }
-//
-//        // Tạo biểu đồ
-//        JFreeChart barChart = ChartFactory.createBarChart(
-//                "Thống Kê Doanh Thu Theo Ngày",
-//                "Ngày",
-//                "Doanh Thu (VND)",
-//                dataset   
-//        );
-//
-//        // Chỉnh sửa độ rộng của các cột
-//        CategoryPlot plot = barChart.getCategoryPlot();
-//        BarRenderer renderer = (BarRenderer) plot.getRenderer();
-//        renderer.setMaximumBarWidth(0.05); // Điều chỉnh đây để làm cột hẹp lại (giá trị nhỏ hơn sẽ hẹp hơn)
-//
-//        // Hiển thị biểu đồ
-//        ChartPanel chart = new ChartPanel(barChart);
-//        chartPanel.removeAll();
-//        chartPanel.add(chart, BorderLayout.CENTER);
-//        chartPanel.validate();
-//        chartPanel.repaint();
+        // Kiểm tra tham số
+        if (startDate == null || endDate == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Lấy dữ liệu từ ThongKe_DAO
+        ThongKe_DAO thongKeDAO = new ThongKe_DAO();
+        Map<String, Double> revenueData = thongKeDAO.getRevenueByDate(startDate, endDate);
+
+        if (revenueData.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu trong khoảng ngày đã chọn.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Tạo dataset cho biểu đồ
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        for (Map.Entry<String, Double> entry : revenueData.entrySet()) {
+            dataset.addValue(entry.getValue(), "Doanh Thu", entry.getKey());
+        }
+
+        // Tạo biểu đồ
+        JFreeChart barChart = ChartFactory.createBarChart(
+                "Thống Kê Doanh Thu Theo Ngày",
+                "Ngày",
+                "Doanh Thu (VND)",
+                dataset   
+        );
+
+        // Chỉnh sửa độ rộng của các cột
+        CategoryPlot plot = barChart.getCategoryPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setMaximumBarWidth(0.05); // Điều chỉnh đây để làm cột hẹp lại (giá trị nhỏ hơn sẽ hẹp hơn)
+
+        // Hiển thị biểu đồ
+        ChartPanel chart = new ChartPanel(barChart);
+        chartPanel.removeAll();
+        chartPanel.add(chart, BorderLayout.CENTER);
+        chartPanel.validate();
+        chartPanel.repaint();
     }
-    
- // Lấy ngày định dạng yyyy-MM-dd từ JDateChooser
+
+    // Lấy ngày định dạng yyyy-MM-dd từ JDateChooser
     private String getFormattedDate(JDateChooser dateChooser) {
         if (dateChooser.getDate() == null) { // Kiểm tra nếu giá trị null
             return null;
@@ -215,8 +222,8 @@ public class ThongKe_GUI extends javax.swing.JPanel {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         return dateFormat.format(dateChooser.getDate());
     }
-    
- // Đặt ngày mặc định cho các trường JDateChooser
+
+    // Đặt ngày mặc định cho các trường JDateChooser
     private void setDefaultDatesAndShowTodayRevenue() {
         java.util.Date currentDate = new java.util.Date(); // Lấy ngày hiện tại
         txtNgayBatDau.setDate(currentDate); // Đặt ngày hiện tại cho txtNgayBatDau
@@ -226,7 +233,7 @@ public class ThongKe_GUI extends javax.swing.JPanel {
         String today = getFormattedDate(txtNgayBatDau);
         createChart(today, today);
     }
-    
+
     private void onDateChanged() {
         String startDate = getFormattedDate(txtNgayBatDau);
         String endDate = getFormattedDate(txtNgayKetThuc);
@@ -241,86 +248,104 @@ public class ThongKe_GUI extends javax.swing.JPanel {
         createChart(startDate, endDate);
     }
 
- // ===================================================================================================================================
-//    private void onMonthChanged() {
-//        // Lấy tháng từ cboThang (bỏ chữ "Tháng")
-//        String monthText = cboThang.getSelectedItem().toString(); // Ví dụ: "Tháng 01"
-//        int month = Integer.parseInt(monthText.replace("Tháng ", "")); // Chỉ lấy số
-//
-//        // Lấy năm từ cboNam (bỏ chữ "Năm")
-//        String yearText = cboNam.getSelectedItem().toString(); // Ví dụ: "Năm 2024"
-//        int year = Integer.parseInt(yearText.replace("Năm ", "")); // Chỉ lấy số
-//
-//        // Lấy dữ liệu doanh thu theo tháng và năm
-//        Map<String, Double> revenueData = ThongKe_DAO.getRevenueByMonth(month, year);
-//
-//        // Tạo dataset cho biểu đồ
-//        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-//        for (Map.Entry<String, Double> entry : revenueData.entrySet()) {
-//            dataset.addValue(entry.getValue(), "Doanh Thu", entry.getKey());
-//        }
-//
-//        // Tạo biểu đồ
-//        JFreeChart barChart = ChartFactory.createBarChart(
-//                "Thống Kê Doanh Thu Theo Tháng",
-//                "Ngày",
-//                "Doanh Thu (VND)",
-//                dataset
-//        );
-//
-//
-//        // Chỉnh sửa độ rộng của các cột
-//        CategoryPlot plot = barChart.getCategoryPlot();
-//        BarRenderer renderer = (BarRenderer) plot.getRenderer();
-//        renderer.setMaximumBarWidth(0.05); // Điều chỉnh đây để làm cột hẹp lại (giá trị nhỏ hơn sẽ hẹp hơn)
-//        
-//        // Hiển thị biểu đồ
-//        ChartPanel chart = new ChartPanel(barChart);
-//        chartPanel.removeAll();
-//        chartPanel.add(chart, BorderLayout.CENTER);
-//        chartPanel.validate();
-//        chartPanel.repaint();
-//    }
-//
-//    // ===================================================================================================================================
-//    private void onYearChanged() {
-//        String yearText = cboNam.getSelectedItem().toString(); // Lấy giá trị từ cboNam
-//        int year = Integer.parseInt(yearText.replace("Năm ", "")); // Bỏ chữ "Năm"
-//
-//        // Lấy dữ liệu doanh thu theo năm (đã sắp xếp trong DAO)
-//        Map<String, Double> revenueData = ThongKe_DAO.getRevenueByYear(year);
-//
-//        // Tạo dataset cho biểu đồ
-//        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-//        
-//        // Sắp xếp dữ liệu theo thứ tự tháng (nếu cần)
-//        for (int month = 1; month <= 12; month++) {
-//            String monthKey = "Tháng " + String.format("%02d", month); // Định dạng Tháng 01, Tháng 02, ...
-//            Double revenue = revenueData.getOrDefault(monthKey, 0.0); // Lấy doanh thu hoặc 0 nếu không có
-//            dataset.addValue(revenue, "Doanh Thu", monthKey); // Thêm vào dataset
-//        }
-//
-//        // Tạo biểu đồ
-//        JFreeChart barChart = ChartFactory.createBarChart(
-//                "Thống Kê Doanh Thu Theo Năm",
-//                "Tháng",
-//                "Doanh Thu (VND)",
-//                dataset
-//        );
-//
-//        // Chỉnh sửa độ rộng của các cột
-//        CategoryPlot plot = barChart.getCategoryPlot();
-//        BarRenderer renderer = (BarRenderer) plot.getRenderer();
-//        renderer.setMaximumBarWidth(0.05); // Điều chỉnh đây để làm cột hẹp lại (giá trị nhỏ hơn sẽ hẹp hơn)
-//
-//        // Hiển thị biểu đồ
-//        ChartPanel chart = new ChartPanel(barChart);
-//        chartPanel.removeAll();
-//        chartPanel.add(chart, BorderLayout.CENTER);
-//        chartPanel.validate();
-//        chartPanel.repaint();
-//    }
+    private void onMonthChanged() {
+        // Lấy tháng từ cboThang (bỏ chữ "Tháng")
+        String monthText = cboThang.getSelectedItem().toString(); // Ví dụ: "Tháng 01"
+        int month = Integer.parseInt(monthText.replace("Tháng ", "")); // Chỉ lấy số
 
+        // Lấy năm từ cboNam (bỏ chữ "Năm")
+        String yearText = cboNam.getSelectedItem().toString(); // Ví dụ: "Năm 2024"
+        int year;
+        try {
+            year = Integer.parseInt(yearText.replace("Năm ", "")); // Chỉ lấy số
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn năm hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-    
+        // Lấy dữ liệu doanh thu theo tháng và năm
+        ThongKe_DAO thongKeDAO = new ThongKe_DAO();
+        Map<String, Double> revenueData = thongKeDAO.getRevenueByMonth(month, year);
+
+        if (revenueData.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu trong tháng đã chọn.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Tạo dataset cho biểu đồ
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        for (Map.Entry<String, Double> entry : revenueData.entrySet()) {
+            dataset.addValue(entry.getValue(), "Doanh Thu", entry.getKey());
+        }
+
+        // Tạo biểu đồ
+        JFreeChart barChart = ChartFactory.createBarChart(
+                "Thống Kê Doanh Thu Theo Tháng",
+                "Ngày",
+                "Doanh Thu (VND)",
+                dataset
+        );
+
+        // Chỉnh sửa độ rộng của các cột
+        CategoryPlot plot = barChart.getCategoryPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setMaximumBarWidth(0.05); // Điều chỉnh đây để làm cột hẹp lại (giá trị nhỏ hơn sẽ hẹp hơn)
+
+        // Hiển thị biểu đồ
+        ChartPanel chart = new ChartPanel(barChart);
+        chartPanel.removeAll();
+        chartPanel.add(chart, BorderLayout.CENTER);
+        chartPanel.validate();
+        chartPanel.repaint();
+    }
+
+    private void onYearChanged() {
+        String yearText = cboNam.getSelectedItem().toString(); // Lấy giá trị từ cboNam
+        int year;
+        try {
+            year = Integer.parseInt(yearText.replace("Năm ", "")); // Bỏ chữ "Năm"
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn năm hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Lấy dữ liệu doanh thu theo năm
+        ThongKe_DAO thongKeDAO = new ThongKe_DAO();
+        Map<String, Double> revenueData = thongKeDAO.getRevenueByYear(year);
+
+        if (revenueData.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu trong năm đã chọn.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Tạo dataset cho biểu đồ
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        // Sắp xếp dữ liệu theo thứ tự tháng
+        for (int month = 1; month <= 12; month++) {
+            String monthKey = "Tháng " + String.format("%02d", month); // Định dạng Tháng 01, Tháng 02, ...
+            Double revenue = revenueData.getOrDefault(monthKey, 0.0); // Lấy doanh thu hoặc 0 nếu không có
+            dataset.addValue(revenue, "Doanh Thu", monthKey); // Thêm vào dataset
+        }
+
+        // Tạo biểu đồ
+        JFreeChart barChart = ChartFactory.createBarChart(
+                "Thống Kê Doanh Thu Theo Năm",
+                "Tháng",
+                "Doanh Thu (VND)",
+                dataset
+        );
+
+        // Chỉnh sửa độ rộng của các cột
+        CategoryPlot plot = barChart.getCategoryPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setMaximumBarWidth(0.05); // Điều chỉnh đây để làm cột hẹp lại (giá trị nhỏ hơn sẽ hẹp hơn)
+
+        // Hiển thị biểu đồ
+        ChartPanel chart = new ChartPanel(barChart);
+        chartPanel.removeAll();
+        chartPanel.add(chart, BorderLayout.CENTER);
+        chartPanel.validate();
+        chartPanel.repaint();
+    }
 }

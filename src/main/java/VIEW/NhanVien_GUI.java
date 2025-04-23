@@ -10,6 +10,7 @@ import javax.swing.text.DocumentFilter.FilterBypass;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -29,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import javax.swing.BorderFactory;
@@ -44,6 +46,14 @@ import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.KhachHang_DAO;
+import CONTROL.NhanVien_DAO;
+import CONTROL.Phim_DAO;
+import MODEL.KhachHang;
+import MODEL.NhanVien;
+import MODEL.Phim;
+import MODEL.TrangThaiPhim;
+import MODEL.VaiTro;
 /**
  *
  * @author 8483
@@ -55,7 +65,7 @@ public class NhanVien_GUI extends javax.swing.JPanel {
 	public NhanVien_GUI() {
 		initComponents();
 		updateHeader();
-
+		loadNhanVienToTable();
 	}
 
 	/**
@@ -90,11 +100,11 @@ public class NhanVien_GUI extends javax.swing.JPanel {
         tbNhanVien.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {},
             new String [] {
-                "Mã nhân viên", "Tên nhân viên", "Loại", "Phái", "Ngày sinh", "Số điện thoại"
+                "Mã nhân viên", "Họ tên nhân viên","Ngày sinh", "Số điện thoại", "Căn cước công dân", "Vai trò"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
+                java.lang.Object.class, java.lang.String.class, java.util.Date.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -207,14 +217,400 @@ public class NhanVien_GUI extends javax.swing.JPanel {
         );
 
         add(jPanel1, "card2");
+        btnThemNhanvien.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		showAddNhanVienDialog();
+        	}
+		});
+        
+        
+        btnCapNhat.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		int selectRow = tbNhanVien.getSelectedRow();
+        		if (selectRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn nhân viên cần cập nhật!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+        		String maNhanVien = tbNhanVien.getValueAt(selectRow, 0).toString();
+
+                // Lấy sản phẩm từ database thông qua DAO
+                NhanVien_DAO dao = new NhanVien_DAO();
+                NhanVien nhanVien = dao.getNhanVienByMa(maNhanVien);
+
+                if (nhanVien == null) {
+                    JOptionPane.showMessageDialog(null, "Không tìm thấy nhân viên để cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Gọi phương thức hiển thị dialog cập nhật
+                UpdateNhanVienDialog(nhanVien);
+        	}
+        });
+        btnXoa.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                int selectedRow = tbNhanVien.getSelectedRow();
+                if (selectedRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn nhân viên cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Lấy mã sản phẩm từ dòng được chọn
+                String maNhanVien = tbNhanVien.getValueAt(selectedRow, 0).toString();
+
+                // Xác nhận trước khi xóa
+                int confirm = JOptionPane.showConfirmDialog(null, 
+                    "Bạn có chắc chắn muốn xóa nhân viên '" + maNhanVien + "' không?", 
+                    "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    NhanVien_DAO dao = new NhanVien_DAO();
+                    if (dao.xoaNhanVien(maNhanVien)) {
+                        JOptionPane.showMessageDialog(null, "Xóa nhân viên thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                        loadNhanVienToTable(); // Cập nhật lại bảng
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Xóa nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
     }// </editor-fold>//GEN-END:initComponents
 
 	private void updateHeader() {
 		JTableHeader header = tbNhanVien.getTableHeader();
 		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
 	}
+	
+	private void loadNhanVienToTable() {
+		NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
+		List<NhanVien> listNhanVien = nhanVienDAO.getAllNhanVien();
+		
+		DefaultTableModel model = (DefaultTableModel) tbNhanVien.getModel();
+	    model.setRowCount(0);
+	    
+	    for (NhanVien nhanVien : listNhanVien) {
+	        Object[] row = {
+	            nhanVien.getMaNHanVien(),
+	            nhanVien.getHoTen(),
+	            nhanVien.getNgaySinh(),
+	            nhanVien.getSoDienThoai(),
+	            nhanVien.getCccd(),
+	            nhanVien.getVaiTro().toString()
+	        };
+	        model.addRow(row);
+	    }
+	}
+	private boolean validData(String maNhanVien, String hoTen, Date ngaySinh, String soDienThoai, String cccd, VaiTro vaiTro, boolean isAddMode) {
+	    // Mã nhân viên: NV + 3 chữ số (ví dụ: NV001)
+	    if (maNhanVien == null || !maNhanVien.matches("^NV\\d{3}$")) {
+	        JOptionPane.showMessageDialog(null, "Mã nhân viên phải theo mẫu: NV + 3 chữ số (VD: NV001).");
+	        return false;
+	    }
 
+	    // Họ tên: chỉ chứa chữ cái (có dấu) và khoảng trắng, không có số hoặc ký tự đặc biệt
+	    if (hoTen == null || hoTen.trim().isEmpty() || !hoTen.matches("^[\\p{L}]+(\\s[\\p{L}]+)*$")) {
+	        JOptionPane.showMessageDialog(null, "Họ tên không hợp lệ. Ví dụ: Phan Duy Giang (không chứa số hoặc ký tự đặc biệt).");
+	        return false;
+	    }
 
+	    // Ngày sinh: không null và phải trước ngày hiện tại
+	    if (ngaySinh == null || ngaySinh.after(new Date())) {
+	        JOptionPane.showMessageDialog(null, "Ngày sinh không được để trống và phải trước ngày hiện tại.");
+	        return false;
+	    }
+
+	    // Số điện thoại: bắt đầu bằng 0 và có đúng 10 chữ số
+	    if (soDienThoai == null || !soDienThoai.matches("^0\\d{9}$")) {
+	        JOptionPane.showMessageDialog(null, "Số điện thoại không hợp lệ. Phải bắt đầu bằng số 0 và có 10 chữ số.");
+	        return false;
+	    }
+
+	    // CCCD: đúng 12 chữ số
+	    if (cccd == null || !cccd.matches("^\\d{12}$")) {
+	        JOptionPane.showMessageDialog(null, "Căn cước công dân phải gồm đúng 12 chữ số.");
+	        return false;
+	    }
+
+	    // Vai trò không được null
+	    if (vaiTro == null) {
+	        JOptionPane.showMessageDialog(null, "Vui lòng chọn vai trò.");
+	        return false;
+	    }
+
+	    return true; // Hợp lệ
+	}
+
+	private void showAddNhanVienDialog() {
+	    final JDialog addDialog = new JDialog(new JDialog((Frame) null, "Thêm Nhân Viên", true));
+	    addDialog.setSize(500, 400);
+	    addDialog.setLayout(new GridBagLayout());
+	    addDialog.setLocationRelativeTo(null);
+
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.insets = new Insets(5, 5, 5, 5);
+	    gbc.anchor = GridBagConstraints.WEST;
+
+	    // Label
+	    JLabel lblMaNhanVien = new JLabel("Mã nhân viên:");
+	    JLabel lblHoTen = new JLabel("Họ tên nhân viên:");
+	    JLabel lblNgaySinh = new JLabel("Ngày sinh:");
+	    JLabel lblSoDienThoai = new JLabel("Số điện thoại:");
+	    JLabel lblCCCD = new JLabel("Căn cước công dân:");
+	    JLabel lblVaiTro = new JLabel("Vai trò:");
+
+	    // Font
+	    Font labelFont = new Font("Times New Roman", Font.BOLD, 15);
+	    lblMaNhanVien.setFont(labelFont);
+	    lblHoTen.setFont(labelFont);
+	    lblNgaySinh.setFont(labelFont);
+	    lblSoDienThoai.setFont(labelFont);
+	    lblCCCD.setFont(labelFont);
+	    lblVaiTro.setFont(labelFont);
+
+	    // Input Fields
+	    JTextField txtMaNhanVien = new JTextField(15);
+	    JTextField txtHoTen = new JTextField(15);
+	    JTextField txtNgaySinh = new JTextField(15);
+	    JTextField txtSoDienThoai = new JTextField(15);
+	    JTextField txtCCCD = new JTextField(15);
+	    JComboBox<VaiTro> cbVaiTro = new JComboBox<>(VaiTro.values()); // Assuming VaiTro is an enum with valid values.
+
+	    // Buttons
+	    JButton btnXacNhan = new JButton("Xác Nhận");
+	    btnXacNhan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnXacNhan.setBackground(new java.awt.Color(25, 159, 254));
+	    btnXacNhan.setForeground(Color.WHITE);
+	    btnXacNhan.setFont(labelFont);
+
+	    JButton btnHuy = new JButton("Hủy");
+	    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnHuy.setBackground(Color.RED);
+	    btnHuy.setForeground(Color.WHITE);
+	    btnHuy.setFont(labelFont);
+
+	    // Add components (Label + Input)
+	    String[] labels = {"Mã nhân viên:", "Họ tên nhân viên:", "Ngày sinh:", "Số điện thoại:", "Căn cước công dân:", "Vai trò:"};
+	    Component[] inputs = {txtMaNhanVien, txtHoTen, txtNgaySinh, txtSoDienThoai, txtCCCD, cbVaiTro};
+
+	    JLabel[] labelArray = {lblMaNhanVien, lblHoTen, lblNgaySinh, lblSoDienThoai, lblCCCD, lblVaiTro};
+
+	    for (int i = 0; i < labels.length; i++) {
+	        // Label
+	        gbc.gridx = 0;
+	        gbc.gridy = i;
+	        gbc.fill = GridBagConstraints.NONE;
+	        gbc.weightx = 0;
+	        addDialog.add(labelArray[i], gbc);
+
+	        // Input
+	        gbc.gridx = 1;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        gbc.weightx = 1.0;
+	        addDialog.add(inputs[i], gbc);
+	    }
+
+	    // Buttons
+	    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+	    buttonPanel.add(btnXacNhan);
+	    buttonPanel.add(btnHuy);
+
+	    gbc.gridx = 0;
+	    gbc.gridy = labels.length;
+	    gbc.gridwidth = 2;
+	    gbc.anchor = GridBagConstraints.CENTER;
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.weightx = 0;
+	    addDialog.add(buttonPanel, gbc);
+
+	    // Event for Xác Nhận
+	    btnXacNhan.addActionListener(e -> {
+	        try {
+	            String maNhanVien = txtMaNhanVien.getText().trim();
+	            String hoTen = txtHoTen.getText().trim();
+	            String ngaySinhStr = txtNgaySinh.getText().trim();
+	            String soDienThoai = txtSoDienThoai.getText().trim();
+	            String cccd = txtCCCD.getText().trim();
+	            VaiTro vaiTro = (VaiTro) cbVaiTro.getSelectedItem();
+
+	            // Chuyển đổi ngày sinh từ chuỗi sang Date theo định dạng "MMM dd, yyyy"
+	            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
+	            sdf.setLenient(false); // Không cho phép sai định dạng như "Apr 32, 2025"
+	            Date ngaySinh = sdf.parse(ngaySinhStr);
+
+	            // Kiểm tra các giá trị
+	            if (!validData(maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro, true)) {
+	                return; // Dừng nếu dữ liệu không hợp lệ
+	            }
+
+	            // Tạo đối tượng nhân viên
+	            NhanVien nhanVien = new NhanVien(maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro);
+	            NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
+
+	            if (nhanVienDAO.themNhanVien(nhanVien)) {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm nhân viên thành công!");
+	                loadNhanVienToTable();
+	                addDialog.dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (ParseException ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Định dạng ngày sinh không hợp lệ! Định dạng đúng: MMM dd, yyyy", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	        } catch (Exception ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            ex.printStackTrace();
+	        }
+	    });
+
+	    // Event for Hủy
+	    btnHuy.addActionListener(e -> addDialog.dispose());
+
+	    addDialog.setVisible(true);
+	}
+	
+	private void UpdateNhanVienDialog(NhanVien nhanVienUpdate) {
+		 	final JDialog updateDialog = new JDialog(new JDialog((Frame) null, "Cập nhật Nhân Viên", true));
+		 	updateDialog.setSize(500, 400);
+		 	updateDialog.setLayout(new GridBagLayout());
+		 	updateDialog.setLocationRelativeTo(null);
+
+		    GridBagConstraints gbc = new GridBagConstraints();
+		    gbc.insets = new Insets(5, 5, 5, 5);
+		    gbc.anchor = GridBagConstraints.WEST;
+
+		    // Label
+		    JLabel lblMaNhanVien = new JLabel("Mã nhân viên:");
+		    JLabel lblHoTen = new JLabel("Họ tên nhân viên:");
+		    JLabel lblNgaySinh = new JLabel("Ngày sinh:");
+		    JLabel lblSoDienThoai = new JLabel("Số điện thoại:");
+		    JLabel lblCCCD = new JLabel("Căn cước công dân:");
+		    JLabel lblVaiTro = new JLabel("Vai trò:");
+		    
+		    Font labelFont = new Font("Times New Roman", Font.BOLD, 15);
+		    lblMaNhanVien.setFont(labelFont);
+		    lblHoTen.setFont(labelFont);
+		    lblNgaySinh.setFont(labelFont);
+		    lblSoDienThoai.setFont(labelFont);
+		    lblCCCD.setFont(labelFont);
+		    lblVaiTro.setFont(labelFont);
+		    
+		 // Mã nhân viên không cho sửa
+		    JTextField txtMaNhanVien = new JTextField(15);
+		    txtMaNhanVien.setText(nhanVienUpdate.getMaNHanVien());
+		    txtMaNhanVien.setEditable(false);
+
+		    // Họ tên
+		    JTextField txtHoTen = new JTextField(15);
+		    txtHoTen.setText(nhanVienUpdate.getHoTen());
+
+		    // Ngày sinh
+		    JTextField txtNgaySinh = new JTextField(15);
+		    SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
+		    txtNgaySinh.setText(sdf.format(nhanVienUpdate.getNgaySinh()));
+
+		    // Số điện thoại
+		    JTextField txtSoDienThoai = new JTextField(15);
+		    txtSoDienThoai.setText(nhanVienUpdate.getSoDienThoai());
+
+		    // CCCD
+		    JTextField txtCCCD = new JTextField(15);
+		    txtCCCD.setText(nhanVienUpdate.getCccd());
+
+		    // Vai trò
+		    JComboBox<VaiTro> cbVaiTro = new JComboBox<>(VaiTro.values());
+		    cbVaiTro.setSelectedItem(nhanVienUpdate.getVaiTro());
+		    
+		    JButton btnCapNhat = new JButton("Cập Nhật");
+		    btnCapNhat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		    btnCapNhat.setBackground(new java.awt.Color(25, 159, 254));
+		    btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
+		    btnCapNhat.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+		    JButton btnHuy = new JButton("Hủy");
+		    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		    btnHuy.setBackground(new java.awt.Color(255, 0, 0));
+		    btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+		    btnHuy.setFont(new Font("Times New Roman", Font.BOLD, 15));
+		    
+		 // Add components (Label + Input)
+		    String[] labels = {"Mã nhân viên:", "Họ tên nhân viên:", "Ngày sinh:", "Số điện thoại:", "Căn cước công dân:", "Vai trò:"};
+		    Component[] inputs = {txtMaNhanVien, txtHoTen, txtNgaySinh, txtSoDienThoai, txtCCCD, cbVaiTro};
+
+		    JLabel[] labelArray = {lblMaNhanVien, lblHoTen, lblNgaySinh, lblSoDienThoai, lblCCCD, lblVaiTro};
+
+		    for (int i = 0; i < labels.length; i++) {
+		        // Label
+		        gbc.gridx = 0;
+		        gbc.gridy = i;
+		        gbc.fill = GridBagConstraints.NONE;
+		        gbc.weightx = 0;
+		        updateDialog.add(labelArray[i], gbc);
+
+		        // Input
+		        gbc.gridx = 1;
+		        gbc.fill = GridBagConstraints.HORIZONTAL;
+		        gbc.weightx = 1.0;
+		        updateDialog.add(inputs[i], gbc);
+		    }
+
+		    // Buttons
+		    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+		    buttonPanel.add(btnCapNhat);
+		    buttonPanel.add(btnHuy);
+
+		    gbc.gridx = 0;
+		    gbc.gridy = labels.length;
+		    gbc.gridwidth = 2;
+		    gbc.anchor = GridBagConstraints.CENTER;
+		    gbc.fill = GridBagConstraints.NONE;
+		    gbc.weightx = 0;
+		    updateDialog.add(buttonPanel, gbc);
+		    
+		    btnCapNhat.addActionListener(e -> {
+		    	try {
+		    		String maNhanVien = txtMaNhanVien.getText().trim();
+		            String hoTen = txtHoTen.getText().trim();
+		            String ngaySinhStr = txtNgaySinh.getText().trim();
+		            String soDienThoai = txtSoDienThoai.getText().trim();
+		            String cccd = txtCCCD.getText().trim();
+		            VaiTro vaiTro = (VaiTro) cbVaiTro.getSelectedItem();
+
+		            // Chuyển đổi ngày sinh từ chuỗi sang Date theo định dạng "MMM dd, yyyy"
+		            SimpleDateFormat sdf2 = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
+		            sdf2.setLenient(false); // Không cho phép sai định dạng như "Apr 32, 2025"
+		            Date ngaySinh = sdf2.parse(ngaySinhStr);
+
+		            // Kiểm tra các giá trị
+		            if (!validData(maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro, true)) {
+		                return; // Dừng nếu dữ liệu không hợp lệ
+		            }
+		            // Cập nhật dữ liệu
+		            nhanVienUpdate.setHoTen(hoTen);
+		            nhanVienUpdate.setNgaySinh(ngaySinh);
+		            nhanVienUpdate.setSoDienThoai(soDienThoai);
+		            nhanVienUpdate.setCccd(cccd);
+		            nhanVienUpdate.setVaiTro(vaiTro);
+		            
+		            NhanVien_DAO nhanVienDAO = new NhanVien_DAO();
+
+		            if (nhanVienDAO.capNhatNhanVien(nhanVienUpdate)) {
+		                JOptionPane.showMessageDialog(updateDialog, "Cập nhật nhân viên thành công!");
+		                loadNhanVienToTable();
+		                updateDialog.dispose();
+		            } else {
+		                JOptionPane.showMessageDialog(updateDialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+		            }
+		        } catch (NumberFormatException ex) {
+		            JOptionPane.showMessageDialog(updateDialog, "Ngày sinh phải là kiểu hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+		        } catch (Exception ex) {
+		            JOptionPane.showMessageDialog(updateDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+		            ex.printStackTrace();
+		        }
+		    });
+		    btnHuy.addActionListener(e -> updateDialog.dispose());
+
+		    updateDialog.setVisible(true);
+	}
+
+	
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel btnCapNhat;

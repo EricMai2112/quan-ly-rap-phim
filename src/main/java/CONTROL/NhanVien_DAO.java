@@ -2,7 +2,6 @@ package CONTROL;
 
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,13 +31,10 @@ public class NhanVien_DAO {
 				nhanVien.setNgaySinh(resultSet.getDate("ngaySinh"));
 				nhanVien.setSoDienThoai(resultSet.getString("soDienThoai"));
 				nhanVien.setCccd(resultSet.getString("cccd"));
+
 				String vaiTroStr = resultSet.getString("vaiTro");
-				for (VaiTro vt : VaiTro.values()) {
-					if (vt.toString().equalsIgnoreCase(vaiTroStr)) {
-						nhanVien.setVaiTro(vt);
-						break;
-					}
-				}
+				VaiTro vaiTro = VaiTro.valueOf(vaiTroStr);
+				nhanVien.setVaiTro(vaiTro);	
 
 				listNhanVien.add(nhanVien);
 			}
@@ -48,59 +44,88 @@ public class NhanVien_DAO {
 
 		return listNhanVien;
 	}
-	
-	public NhanVien getNhanVienByMa(String maNV) {
-		Connection con = connectDB.getConnection();
-		String sql = "SELECT * FROM NhanVien WHERE maNhanVien = ?";
-		try(PreparedStatement stmt = con.prepareStatement(sql)){
-			stmt.setString(1, maNV);
-			ResultSet rs = stmt.executeQuery();
-			
-			if(rs.next()) {
-				String ten = rs.getString("hoTen");
-				Date ngaySinh = rs.getDate("ngaySinh");
-				String sdt = rs.getString("soDienThoai");
-				VaiTro vt = VaiTro.valueOf(rs.getString("vaiTro").toUpperCase());
-				String cccd = rs.getString("cccd");
-				return new NhanVien(maNV, ten, ngaySinh, sdt, cccd,vt);
-				
-			}
-		}catch(SQLException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	// Sinh mã NV mới
-	public String generateMaNhanVien() {
-		Connection con = connectDB.getConnection();
-	    String prefix = "NV";
-	    String sql = "SELECT TOP 1 maNhanVien FROM NhanVien WHERE maNhanVien LIKE 'NV%' ORDER BY maNhanVien DESC";
-	    try (PreparedStatement stmt = con.prepareStatement(sql);
-	         ResultSet rs = stmt.executeQuery()) {
-	        if (rs.next()) {
-	            String last = rs.getString(1); // e.g. "NV012"
-	            int num = Integer.parseInt(last.substring(2));
-	            return prefix + String.format("%03d", num+1);
+
+	public NhanVien getNhanVienByMa(String maNhanVien) {
+	    String sql = "SELECT * FROM NhanVien WHERE maNhanVien = ?";
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+	        ps.setString(1, maNhanVien);
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                NhanVien nv = new NhanVien();
+	                nv.setMaNHanVien(rs.getString("maNhanVien"));
+	                nv.setHoTen(rs.getString("hoTen"));
+	                nv.setNgaySinh(rs.getDate("ngaySinh"));
+	                nv.setSoDienThoai(rs.getString("soDienThoai"));
+	                nv.setCccd(rs.getString("cccd"));
+
+	                String vaiTroStr = rs.getString("vaiTro");
+	                VaiTro vaiTro = VaiTro.valueOf(vaiTroStr);
+	                nv.setVaiTro(vaiTro);
+
+	                return nv;
+	            }
 	        }
-	    } catch (SQLException e) { e.printStackTrace(); }
-	    return prefix + "001";
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return null;
 	}
 
-	// Thêm nhân viên mới
-	public boolean themNhanVien(NhanVien nv) {
-		Connection conn = connectDB.getConnection();
-	    String sql = "INSERT INTO NhanVien(maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro) VALUES(?,?,?,?,?,?)";
-	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-	        stmt.setString(1, nv.getMaNHanVien());
-	        stmt.setString(2, nv.getHoTen());
-	        stmt.setDate(3, new java.sql.Date(nv.getNgaySinh().getTime()));
-	        stmt.setString(4, nv.getSoDienThoai());
-	        stmt.setString(5, nv.getCccd());
-	        stmt.setString(6, nv.getVaiTro().toString());
-	        return stmt.executeUpdate() > 0;
-	    } catch (SQLException e) { e.printStackTrace(); return false; }
+	public boolean themNhanVien(NhanVien nhanVien) {
+	    String sql = "INSERT INTO NhanVien (maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro) VALUES (?, ?, ?, ?, ?, ?)";
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+	        ps.setString(1, nhanVien.getMaNHanVien());
+	        ps.setString(2, nhanVien.getHoTen());
+	        ps.setDate(3, new java.sql.Date(nhanVien.getNgaySinh().getTime()));
+	        ps.setString(4, nhanVien.getSoDienThoai());
+	        ps.setString(5, nhanVien.getCccd());
+	        ps.setString(6, nhanVien.getVaiTro().getDbValue());
+	        
+	        int rowsAffected = ps.executeUpdate();
+	        return rowsAffected > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
+	    }
 	}
 
+	public boolean capNhatNhanVien(NhanVien nhanVien) {
+	    String sql = "UPDATE NhanVien SET hoTen = ?, ngaySinh = ?, soDienThoai = ?, cccd = ?, vaiTro = ? WHERE maNhanVien = ?";
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
 
+	        ps.setString(1, nhanVien.getHoTen());
+	        ps.setDate(2, new java.sql.Date(nhanVien.getNgaySinh().getTime()));
+	        ps.setString(3, nhanVien.getSoDienThoai());
+	        ps.setString(4, nhanVien.getCccd());
+	        ps.setString(5, nhanVien.getVaiTro().name());
+	        ps.setString(6, nhanVien.getMaNHanVien());
+
+	        int rowsAffected = ps.executeUpdate();
+	        return rowsAffected > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
+
+	public boolean xoaNhanVien(String maNhanVien) {
+	    String sql = "DELETE FROM NhanVien WHERE maNhanVien = ?";
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+	        ps.setString(1, maNhanVien);
+	        int rowsAffected = ps.executeUpdate();
+	        return rowsAffected > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
 }

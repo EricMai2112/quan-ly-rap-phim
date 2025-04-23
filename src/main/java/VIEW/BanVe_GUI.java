@@ -17,8 +17,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -26,9 +32,11 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -44,8 +52,28 @@ import javax.swing.border.TitledBorder;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.ChiTietGiaoDich_DAO;
+import CONTROL.Ghe_DAO;
+import CONTROL.GiaoDich_DAO;
+import CONTROL.KhachHang_DAO;
+import CONTROL.KhachHang_DAO1;
+import CONTROL.LichChieu2_DAO;
 import CONTROL.Phim_DAO;
+import CONTROL.SanPhamDichVu_DAO;
+import CONTROL.Ve_DAO;
+import Components.ExportFile;
+import ConnectDB.ConnectDB;
+import MODEL.ChiTietGiaoDich;
+import MODEL.Ghe;
+import MODEL.GiaoDich;
+import MODEL.KhachHang;
+import MODEL.LichChieu;
+import MODEL.LoaiGhe;
+import MODEL.NhanVien;
 import MODEL.Phim;
+import MODEL.SanPham;
+import MODEL.TrangThaiGhe;
+import MODEL.Ve;
 
 /**
  *
@@ -53,6 +81,7 @@ import MODEL.Phim;
  */
 public class BanVe_GUI extends javax.swing.JPanel {
 	private JPanel panelMain;
+	private static BanVe_GUI instance;
 
     JDateChooser txtNgayCheckIn = new com.toedter.calendar.JDateChooser();
     JDateChooser txtNgayCheckOut = new com.toedter.calendar.JDateChooser();
@@ -60,12 +89,20 @@ public class BanVe_GUI extends javax.swing.JPanel {
     /**
      * Creates new form Phong_GUI
      */
+    public static BanVe_GUI getInstance() {
+        if (instance == null) {
+            instance = new BanVe_GUI();
+        }
+        return instance;
+    }
+    
     public BanVe_GUI() {
         
         initComponents();
         loadAndDisplayPhimCards();
 
     }
+    
 
     private void initComponents() {
     	
@@ -104,7 +141,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
 
         
-        JLabel lblTitle = new JLabel("Danh sách phòng");
+        JLabel lblTitle = new JLabel("Danh sách phim");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         headerPanel.add(panelLocNgay, BorderLayout.WEST);
         //Panel bên phải
@@ -134,15 +171,13 @@ public class BanVe_GUI extends javax.swing.JPanel {
     }
     
 
-    private void loadAndDisplayPhimCards() {
+    public void loadAndDisplayPhimCards() {
         Phim_DAO phimDAO = new Phim_DAO();
         List<Phim> listPhim = phimDAO.getAllPhim();
 
-        // Xóa dữ liệu cũ
         panelMain.removeAll();
 
-        // Tạo panel chứa các card phim
-        JPanel cardsPanel = new JPanel(new GridLayout(0, 4, 10, 10)); // 4 cột, khoảng cách 10px
+        JPanel cardsPanel = new JPanel(new GridLayout(0, 4, 10, 10));
         cardsPanel.setBackground(Color.white);
 
         for (Phim phim : listPhim) {
@@ -150,14 +185,12 @@ public class BanVe_GUI extends javax.swing.JPanel {
             cardsPanel.add(card);
         }
 
-        // Tạo JScrollPane mới chứa cardsPanel
         JScrollPane scrollPane = new JScrollPane(cardsPanel);
         scrollPane.setBorder(null);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setPreferredSize(new Dimension(panelMain.getWidth(), panelMain.getHeight()));
 
-        // Thêm JScrollPane vào panelMain
-        panelMain.setLayout(new BorderLayout()); // Thay đổi layout để phù hợp
+        panelMain.setLayout(new BorderLayout());
         panelMain.add(scrollPane, BorderLayout.CENTER);
 
         panelMain.revalidate();
@@ -172,8 +205,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
         card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
         card.setPreferredSize(new Dimension(200, 300));
 
-        // Lấy hình ảnh từ phim
-        String hinhAnh = phim.getHinhAnh(); // Giả sử có phương thức getHinhAnh()
+        String hinhAnh = phim.getHinhAnh();
         JLabel imageLabel;
         
         try {
@@ -189,7 +221,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
         imageLabel.setHorizontalAlignment(JLabel.CENTER);
         card.add(imageLabel, BorderLayout.CENTER);
 
-        // Phần thông tin phim
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
@@ -213,10 +244,424 @@ public class BanVe_GUI extends javax.swing.JPanel {
         infoPanel.add(genreLabel);
         infoPanel.add(durationLabel);
         infoPanel.add(statusLabel);
-
         card.add(infoPanel, BorderLayout.SOUTH);
+        
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                hienDialogLichChieu(phim); // Mở dialog chọn lịch chiếu tương ứng phim
+            }
+        });
+
 
         return card;
+    }
+    
+    private void hienDialogLichChieu(Phim phim) {
+        List<LichChieu> lichChieuList = new LichChieu2_DAO().getLichChieuByPhim(phim.getMaPhim());
+        if (lichChieuList.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có lịch chiếu cho phim này.");
+            return;
+        }
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn lịch chiếu", true);
+        dialog.setSize(450, 300);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel listPanel = new JPanel(new GridLayout(0, 1, 10, 10));
+        for (LichChieu lc : lichChieuList) {
+            String ngay = new SimpleDateFormat("dd/MM/yyyy").format(lc.getNgayChieu());
+            String gio = new SimpleDateFormat("HH:mm").format(lc.getGioBatDau());
+            String phong = lc.getPhongChieu().getTenPhong();
+            JButton btn = new JButton(ngay + " - " + gio + " tại " + phong);
+            btn.addActionListener(e -> {
+                dialog.dispose();
+                hienDialogChonGhe(lc);
+            });
+            listPanel.add(btn);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(listPanel);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.setVisible(true);
+    }
+
+    private void hienDialogChonGhe(LichChieu lichChieu) {
+        List<Ghe> danhSachGhe = new Ghe_DAO().getDanhSachGheTheoPhong(lichChieu.getPhongChieu().getMaPhong());
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn ghế", true);
+        dialog.setSize(900, 500);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+
+        JPanel panelMain = new JPanel(new BorderLayout());
+        JPanel panelTrai = new JPanel(new BorderLayout());
+        JPanel panelPhai = new JPanel();
+        panelPhai.setLayout(new BoxLayout(panelPhai, BoxLayout.Y_AXIS));
+        panelPhai.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // ==== PANEL GHẾ ====
+        JPanel panelGhe = new JPanel(new GridLayout(5, 10, 5, 5));
+        Map<JButton, Ghe> mapButtonToGhe = new HashMap<>();
+
+        JLabel lblTongTien = new JLabel("Tổng tiền: 0 VNĐ");
+        lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTongTien.setForeground(Color.RED);
+        lblTongTien.setAlignmentX(Component.CENTER_ALIGNMENT);
+        DecimalFormat decimalFormat = new DecimalFormat("#,### VNĐ");
+        List<JCheckBox> checkboxSanPham = new ArrayList<>();
+
+        Ghe_DAO gheDAO = new Ghe_DAO();
+        for (Ghe ghe : danhSachGhe) {
+            JButton btnGhe = new JButton(ghe.getSoGhe());
+            TrangThaiGhe trangThai = gheDAO.getTrangThaiGhe(ghe.getMaGhe(), lichChieu.getMaLichChieu());
+            if (trangThai == TrangThaiGhe.GHE_DAT) {
+                btnGhe.setBackground(Color.RED);
+                btnGhe.setEnabled(false);
+            } else if (trangThai == TrangThaiGhe.GHE_TRONG) {
+                if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                    btnGhe.setBackground(Color.GREEN);
+                } else {
+                    btnGhe.setBackground(Color.ORANGE);
+                }
+
+                btnGhe.addActionListener(e -> {
+                    Color current = btnGhe.getBackground();
+                    if (current.equals(Color.YELLOW)) {
+                        if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                            btnGhe.setBackground(Color.GREEN);
+                        } else {
+                            btnGhe.setBackground(Color.ORANGE);
+                        }
+                    } else {
+                        btnGhe.setBackground(Color.YELLOW);
+                    }
+                    updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
+                });
+            }
+
+            mapButtonToGhe.put(btnGhe, ghe);
+            panelGhe.add(btnGhe);
+        }
+
+        panelTrai.setBorder(BorderFactory.createTitledBorder("Sơ đồ ghế"));
+        panelTrai.add(new JScrollPane(panelGhe), BorderLayout.CENTER);
+
+        // ==== PANEL SẢN PHẨM ====
+        JPanel panelSanPham = new JPanel(new GridLayout(0, 1, 5, 5));
+        panelSanPham.setBorder(BorderFactory.createTitledBorder("Chọn sản phẩm"));
+
+        SanPhamDichVu_DAO spDAO = new SanPhamDichVu_DAO();
+        List<SanPham> dsSanPham = spDAO.getAllSanPham();
+
+        for (SanPham sp : dsSanPham) {
+            JCheckBox cb = new JCheckBox(sp.getTenSanPham() + " - " + sp.getGiaTien() + " VNĐ");
+            cb.putClientProperty("sanpham", sp);
+            cb.addActionListener(e -> {
+                updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
+            });
+            checkboxSanPham.add(cb);
+            panelSanPham.add(cb);
+        }
+
+        // ==== PANEL THÔNG TIN KHÁCH HÀNG ====
+        JPanel panelKH = new JPanel(new GridLayout(0, 2, 5, 5));
+        panelKH.setBorder(BorderFactory.createTitledBorder("Thông tin khách hàng"));
+        JTextField txtTenKH = new JTextField();
+        JTextField txtSDT = new JTextField();
+        JTextField txtEmail = new JTextField();
+        panelKH.add(new JLabel("Họ tên:"));
+        panelKH.add(txtTenKH);
+        panelKH.add(new JLabel("SĐT:"));
+        panelKH.add(txtSDT);
+        panelKH.add(new JLabel("Email:"));
+        panelKH.add(txtEmail);
+
+        // ==== NÚT LÀM MỚI ====
+        JButton btnLamMoi = new JButton("Làm mới");
+        btnLamMoi.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLamMoi.setBackground(new java.awt.Color(25, 159, 254));
+        btnLamMoi.setForeground(new java.awt.Color(255, 255, 255));
+        btnLamMoi.setFont(new Font("Time new Romans", Font.BOLD, 15));
+        btnLamMoi.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnLamMoi.addActionListener(e -> {
+            panelGhe.removeAll();
+            mapButtonToGhe.clear();
+            for (Ghe ghe : danhSachGhe) {
+                JButton btnGhe = new JButton(ghe.getSoGhe());
+                TrangThaiGhe trangThai = gheDAO.getTrangThaiGhe(ghe.getMaGhe(), lichChieu.getMaLichChieu());
+                if (trangThai == TrangThaiGhe.GHE_DAT) {
+                    btnGhe.setBackground(Color.RED);
+                    btnGhe.setEnabled(false);
+                } else if (trangThai == TrangThaiGhe.GHE_TRONG) {
+                    if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                        btnGhe.setBackground(Color.GREEN);
+                    } else {
+                        btnGhe.setBackground(Color.ORANGE);
+                    }
+                    btnGhe.addActionListener(e2 -> {
+                        Color current = btnGhe.getBackground();
+                        if (current.equals(Color.YELLOW)) {
+                            if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                                btnGhe.setBackground(Color.GREEN);
+                            } else {
+                                btnGhe.setBackground(Color.ORANGE);
+                            }
+                        } else {
+                            btnGhe.setBackground(Color.YELLOW);
+                        }
+                        updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
+                    });
+                }
+                mapButtonToGhe.put(btnGhe, ghe);
+                panelGhe.add(btnGhe);
+            }
+            panelGhe.revalidate();
+            panelGhe.repaint();
+        });
+
+        // ==== NÚT THANH TOÁN ====
+        JButton btnThanhToan = new JButton("Xác nhận");
+        btnThanhToan.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnThanhToan.setBackground(new java.awt.Color(25, 159, 254));
+        btnThanhToan.setForeground(new java.awt.Color(255, 255, 255));
+        btnThanhToan.setFont(new Font("Time new Romans", Font.BOLD, 15));
+        btnThanhToan.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnThanhToan.addActionListener(e -> {
+            List<Ghe> gheDaChon = new ArrayList<>();
+            double tongTienGhe = 0;
+            for (Map.Entry<JButton, Ghe> entry : mapButtonToGhe.entrySet()) {
+                JButton btn = entry.getKey();
+                Ghe ghe = entry.getValue();
+                if (btn.getBackground().equals(Color.YELLOW)) {
+                    gheDaChon.add(ghe);
+                    if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                        tongTienGhe += 60000;
+                    } else {
+                        tongTienGhe += 100000;
+                    }
+                }
+            }
+
+            String hoTen = txtTenKH.getText().trim();
+            String sdt = txtSDT.getText().trim();
+            String email = txtEmail.getText().trim();
+            if (hoTen.isEmpty() || sdt.isEmpty() || gheDaChon.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập họ tên, số điện thoại và chọn ít nhất 1 ghế.");
+                return;
+            }
+
+            List<SanPham> spDaChon = new ArrayList<>();
+            double tongTienSanPham = 0;
+            for (JCheckBox cb : checkboxSanPham) {
+                if (cb.isSelected()) {
+                    SanPham sp = (SanPham) cb.getClientProperty("sanpham");
+                    spDaChon.add(sp);
+                    tongTienSanPham += sp.getGiaTien();
+                }
+            }
+
+            // Lưu thông tin khách hàng
+            KhachHang_DAO1 khachHangDAO = new KhachHang_DAO1();
+            KhachHang khachHang = khachHangDAO.getKhachHangBySDT(sdt);
+            String maKhachHang;
+            if (khachHang == null) {
+                maKhachHang = khachHangDAO.themKhachHang(hoTen, sdt, email);
+                if (maKhachHang == null) {
+                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu thông tin khách hàng!");
+                    return;
+                }
+            } else {
+                maKhachHang = khachHang.getMaKhachHang();
+            }
+
+            // Tính tổng tiền
+            double tongTien = tongTienGhe + tongTienSanPham;
+
+            // Lấy thông tin nhân viên
+            String maNhanVien = "NV001";
+
+            // Lưu thông tin vé
+            Ve_DAO veDAO = new Ve_DAO();
+            List<Ve> veList = new ArrayList<>();
+            for (Ghe ghe : gheDaChon) {
+                double giaVe = (ghe.getLoaiGhe() == LoaiGhe.THUONG ? 60000 : 100000) + tongTienSanPham / gheDaChon.size();
+                String maVe = veDAO.themVe(lichChieu.getMaLichChieu(), ghe.getMaGhe(), giaVe, maNhanVien, maKhachHang);
+                if (maVe == null) {
+                    JOptionPane.showMessageDialog(dialog, "Ghế " + ghe.getSoGhe() + " đã được đặt bởi người khác. Vui lòng chọn ghế khác.");
+                    return;
+                }
+                Ve ve = new Ve();
+                ve.setMaVe(maVe);
+                ve.setLichChieu(lichChieu);
+                ve.setGhe(ghe);
+                ve.setGiaVe(giaVe);
+                ve.setTrangThaiVe("DA_THANH_TOAN");
+                ve.setThoiGianBan(new java.util.Date());
+                ve.setNhanVien(new NhanVien(maNhanVien));
+                ve.setKhachHang(new KhachHang(maKhachHang));
+                veList.add(ve);
+            }
+
+            // Lưu giao dịch
+            GiaoDich_DAO giaoDichDAO = new GiaoDich_DAO();
+            String maGiaoDich = generateMaGiaoDich();
+            GiaoDich giaoDich = new GiaoDich(maGiaoDich, tongTien, new java.util.Date(), new NhanVien(maNhanVien), new KhachHang(maKhachHang));
+            boolean giaoDichSuccess = giaoDichDAO.themGiaoDich(giaoDich);
+            if (!giaoDichSuccess) {
+                JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu giao dịch!");
+                return;
+            }
+
+            // Lưu chi tiết giao dịch
+            ChiTietGiaoDich_DAO chiTietGiaoDichDAO = new ChiTietGiaoDich_DAO();
+            int chiTietCounter = 1;
+            for (Ve ve : veList) {
+                String maChiTiet = maGiaoDich + "_CT" + String.format("%03d", chiTietCounter++);
+                ChiTietGiaoDich chiTietVe = new ChiTietGiaoDich(maChiTiet, giaoDich, ve, null, 1, ve.getGiaVe(), ve.getGiaVe() * 1);
+                boolean chiTietVeSuccess = chiTietGiaoDichDAO.themChiTietGiaoDich(chiTietVe);
+                if (!chiTietVeSuccess) {
+                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu chi tiết giao dịch cho vé " + ve.getMaVe());
+                    return;
+                }
+            }
+            for (SanPham sp : spDaChon) {
+                String maChiTiet = maGiaoDich + "_CT" + String.format("%03d", chiTietCounter++);
+                ChiTietGiaoDich chiTietSp = new ChiTietGiaoDich(maChiTiet, giaoDich, null, sp, 1, sp.getGiaTien(), sp.getGiaTien() * 1);
+                boolean chiTietSpSuccess = chiTietGiaoDichDAO.themChiTietGiaoDich(chiTietSp);
+                if (!chiTietSpSuccess) {
+                    JOptionPane.showMessageDialog(dialog, "Lỗi khi lưu chi tiết giao dịch cho sản phẩm " + sp.getTenSanPham());
+                    return;
+                }
+            }
+
+            // Làm mới giao diện sau khi đặt vé thành công
+            JOptionPane.showMessageDialog(dialog, "Thanh toán thành công!");
+         // Xuất file PDF
+            ExportFile exportFile = new ExportFile();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+            exportFile.exportTicketInvoiceToPDF(
+                giaoDich, 
+                new KhachHang(maKhachHang, hoTen, sdt, email), 
+                veList, 
+                spDaChon, 
+                tongTien, 
+                lichChieu.getPhim().getTenPhim(), 
+                dateFormat.format(lichChieu.getNgayChieu()), 
+                timeFormat.format(lichChieu.getGioBatDau()), 
+                lichChieu.getPhongChieu().getTenPhong()
+            );
+            panelGhe.removeAll(); // Xóa các ghế cũ
+            mapButtonToGhe.clear(); // Xóa map cũ
+            for (Ghe ghe : danhSachGhe) {
+                JButton btnGhe = new JButton(ghe.getSoGhe());
+                TrangThaiGhe trangThai = gheDAO.getTrangThaiGhe(ghe.getMaGhe(), lichChieu.getMaLichChieu());
+                if (trangThai == TrangThaiGhe.GHE_DAT) {
+                    btnGhe.setBackground(Color.RED);
+                    btnGhe.setEnabled(false);
+                } else if (trangThai == TrangThaiGhe.GHE_TRONG) {
+                    if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                        btnGhe.setBackground(Color.GREEN);
+                    } else {
+                        btnGhe.setBackground(Color.ORANGE);
+                    }
+                    btnGhe.addActionListener(e2 -> {
+                        Color current = btnGhe.getBackground();
+                        if (current.equals(Color.YELLOW)) {
+                            if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                                btnGhe.setBackground(Color.GREEN);
+                            } else {
+                                btnGhe.setBackground(Color.ORANGE);
+                            }
+                        } else {
+                            btnGhe.setBackground(Color.YELLOW);
+                        }
+                        updateTongTien(mapButtonToGhe, checkboxSanPham, lblTongTien, decimalFormat);
+                    });
+                }
+                mapButtonToGhe.put(btnGhe, ghe);
+                panelGhe.add(btnGhe);
+            }
+            panelGhe.revalidate();
+            panelGhe.repaint();
+
+            // Đặt lại các trường nhập liệu
+            txtTenKH.setText("");
+            txtSDT.setText("");
+            txtEmail.setText("");
+            for (JCheckBox cb : checkboxSanPham) {
+                cb.setSelected(false);
+            }
+            lblTongTien.setText("Tổng tiền: 0 VNĐ");
+
+            // Không đóng dialog để người dùng có thể tiếp tục đặt ghế
+            // dialog.dispose();
+        });
+
+        panelPhai.add(panelSanPham);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(panelKH);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(btnLamMoi);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(btnThanhToan);
+        panelPhai.add(Box.createVerticalStrut(10));
+        panelPhai.add(lblTongTien);
+
+        panelMain.add(panelTrai, BorderLayout.CENTER);
+        panelMain.add(panelPhai, BorderLayout.EAST);
+        dialog.add(panelMain);
+
+        dialog.setVisible(true);
+    }
+
+    private String generateMaGiaoDich() {
+        String sql = "SELECT MAX(maGiaoDich) AS maxId FROM GiaoDich";
+        try (Connection conn = ConnectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                String maxId = rs.getString("maxId");
+                if (maxId != null) {
+                    // Giả sử mã có dạng GD001, GD002, ...
+                    int number = Integer.parseInt(maxId.replace("GD", "")) + 1;
+                    return "GD" + String.format("%03d", number);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "GD001"; // Nếu không có giao dịch nào, bắt đầu từ GD001
+    }
+    
+    
+    private void updateTongTien(Map<JButton, Ghe> mapButtonToGhe, List<JCheckBox> checkboxSanPham, 
+                               JLabel lblTongTien, DecimalFormat decimalFormat) {
+        double tongTien = 0;
+
+        for (Map.Entry<JButton, Ghe> entry : mapButtonToGhe.entrySet()) {
+            JButton btn = entry.getKey();
+            Ghe ghe = entry.getValue();
+            if (btn.getBackground().equals(Color.YELLOW)) {
+                if (ghe.getLoaiGhe() == LoaiGhe.THUONG) {
+                    tongTien += 60000;
+                } else {
+                    tongTien += 100000;
+                }
+            }
+        }
+
+        for (JCheckBox cb : checkboxSanPham) {
+            if (cb.isSelected()) {
+                SanPham sp = (SanPham) cb.getClientProperty("sanpham");
+                tongTien += sp.getGiaTien();
+            }
+        }
+
+        lblTongTien.setText("Tổng tiền: " + decimalFormat.format(tongTien));
     }
 
 

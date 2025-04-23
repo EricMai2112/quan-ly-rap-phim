@@ -14,6 +14,11 @@ public class Phim {
 		
 	}
 	
+	public Phim(String maPhim, String tenPhim) {
+		super();
+		this.maPhim = maPhim;
+		this.tenPhim = tenPhim;
+	}
 	
 	
 	public Phim(String maPhim, String tenPhim, int thoiLuong, String theLoai, TrangThaiPhim trangThaiPhim,

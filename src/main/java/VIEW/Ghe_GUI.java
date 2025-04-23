@@ -6,6 +6,7 @@ import javax.swing.text.DocumentFilter.FilterBypass;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -25,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import javax.swing.BorderFactory;
@@ -40,6 +42,16 @@ import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 
+import CONTROL.Ghe_GIANG_DAO;
+import CONTROL.NhanVien_DAO;
+import CONTROL.PhongChieu_DAO;
+import MODEL.Ghe;
+import MODEL.LoaiGhe;
+import MODEL.NhanVien;
+import MODEL.PhongChieu;
+import MODEL.TrangThaiGhe;
+import MODEL.VaiTro;
+
 /**
  *
  * @author 8483
@@ -50,9 +62,8 @@ public class Ghe_GUI extends javax.swing.JPanel {
 	 */
 	public Ghe_GUI() {
 		initComponents();
-
 		updateHeader();
-
+		loadGheToTable();
 	}
 
 	/**
@@ -69,7 +80,7 @@ public class Ghe_GUI extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         titleGhe = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tbNhanVien = new javax.swing.JTable();
+        tbGhe = new javax.swing.JTable();
         btnXoa = new javax.swing.JPanel();
         lbXoa = new javax.swing.JLabel();
         btnCapNhat = new javax.swing.JPanel();
@@ -84,22 +95,22 @@ public class Ghe_GUI extends javax.swing.JPanel {
         titleGhe.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         titleGhe.setText("Danh sách ghế");
 
-        tbNhanVien.setModel(new javax.swing.table.DefaultTableModel(
+        tbGhe.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {},
             new String [] {
-                "Mã nhân viên", "Tên nhân viên", "Loại", "Phái", "Ngày sinh", "Số điện thoại"
+                "Mã ghế", "Phòng chiếu(Mã phòng)", "Số ghế", "Loại ghế"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
         });
-        tbNhanVien.setRowHeight(40);
-        jScrollPane1.setViewportView(tbNhanVien);
+        tbGhe.setRowHeight(40);
+        jScrollPane1.setViewportView(tbGhe);
 
         btnXoa.setBackground(new java.awt.Color(255, 0, 0));
         btnXoa.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -206,14 +217,325 @@ public class Ghe_GUI extends javax.swing.JPanel {
         );
 
         add(jPanel1, "card2");
-    }// </editor-fold>//GEN-END:initComponents
+        btnThemGhe.addMouseListener(new MouseAdapter() {
+        	public void mouseClicked(MouseEvent e) {
+        		showAddGheDialog();
+        	}
+		});
+        btnCapNhat.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                int selectRow = tbGhe.getSelectedRow();
+                if (selectRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn ghế cần cập nhật!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                String maGhe = tbGhe.getValueAt(selectRow, 0).toString();
+
+                // Lấy danh sách ghế theo mã phòng từ database thông qua DAO
+                Ghe_GIANG_DAO dao = new Ghe_GIANG_DAO();
+                Ghe ghe = dao.getGheByMa(maGhe);
+                if (ghe == null) {
+                    JOptionPane.showMessageDialog(null, "Không tìm thấy ghế để cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+   
+                // Gọi phương thức hiển thị dialog cập nhật
+                UpdateGheDialog(ghe);
+            }
+        });
+        btnXoa.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                int selectedRow = tbGhe.getSelectedRow();
+                if (selectedRow == -1) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng chọn ghế cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Lấy mã sản phẩm từ dòng được chọn
+                String maGhe = tbGhe.getValueAt(selectedRow, 0).toString();
+
+                // Xác nhận trước khi xóa
+                int confirm = JOptionPane.showConfirmDialog(null, 
+                    "Bạn có chắc chắn muốn xóa ghế '" + maGhe + "' không?", 
+                    "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    Ghe_GIANG_DAO dao = new Ghe_GIANG_DAO();
+                    if (dao.xoaGhe(maGhe)) {
+                        JOptionPane.showMessageDialog(null, "Xóa ghế thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                        loadGheToTable(); // Cập nhật lại bảng
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Xóa ghế thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+}// </editor-fold>//GEN-END:initComponents
 
 	private void updateHeader() {
-		JTableHeader header = tbNhanVien.getTableHeader();
+		JTableHeader header = tbGhe.getTableHeader();
 		header.setFont(new Font("Times new Romans", Font.BOLD, 16));
 	}
+	private void loadGheToTable() {
+	    Ghe_GIANG_DAO gheDAO = new Ghe_GIANG_DAO();
+	    List<Ghe> listGhe = gheDAO.getDanhSachTatCaGhe();
 
+	    DefaultTableModel model = (DefaultTableModel) tbGhe.getModel();
+	    model.setRowCount(0); // Xóa dữ liệu cũ
 
+	    for (Ghe ghe : listGhe) {
+	        Object[] row = {
+	            ghe.getMaGhe(),
+	            ghe.getPhongChieu().getMaPhong(), // hoặc getMaPhong nếu muốn
+	            ghe.getSoGhe(),
+	            ghe.getLoaiGhe().toString(),
+	        };
+	        model.addRow(row);
+	    }
+	}
+	private boolean validData(String maGhe, String phongChieu, String soGhe, LoaiGhe loaiGhe) {
+	    if (maGhe == null || !maGhe.matches("^G\\d{3}$")) {
+	        JOptionPane.showMessageDialog(null, "Mã ghế phải theo mẫu: G + 3 chữ số (VD: G001).");
+	        return false;
+	    }
+
+	    if (phongChieu == null || !phongChieu.matches("^PC\\d{3}$")) {
+	        JOptionPane.showMessageDialog(null, "Phòng chiếu phải theo mẫu: PC + 3 chữ số (VD: PC001).");
+	        return false;
+	    }
+
+	    if (soGhe == null || !soGhe.matches("^[A-Z]\\d{1,2}$")) {
+	        JOptionPane.showMessageDialog(null, "Số ghế phải theo mẫu: chữ cái (A-Z) + số (VD: A1, B4, C12).");
+	        return false;
+	    }
+
+	    if (loaiGhe == null) {
+	        JOptionPane.showMessageDialog(null, "Vui lòng chọn loại ghế.");
+	        return false;
+	    }
+
+	    return true;
+	}
+
+	private void showAddGheDialog() {
+	    final JDialog addDialog = new JDialog((Frame) null, "Thêm Ghế", true);
+	    addDialog.setSize(500, 400);
+	    addDialog.setLayout(new GridBagLayout());
+	    addDialog.setLocationRelativeTo(null);
+
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.insets = new Insets(5, 5, 5, 5);
+	    gbc.anchor = GridBagConstraints.WEST;
+
+	    JLabel lblMaGhe = new JLabel("Mã ghế:");
+	    JLabel lblPhongChieu = new JLabel("Phòng chiếu (Mã phòng):");
+	    JLabel lblSoGhe = new JLabel("Số ghế:");
+	    JLabel lblLoaiGhe = new JLabel("Loại ghế:");
+	  
+
+	    Font labelFont = new Font("Times New Roman", Font.BOLD, 15);
+	    JLabel[] labels = {lblMaGhe, lblPhongChieu, lblSoGhe, lblLoaiGhe};
+	    for (JLabel lbl : labels) lbl.setFont(labelFont);
+
+	    JTextField txtMaGhe = new JTextField(15);
+	    JTextField txtPhongChieu = new JTextField(15);
+	    JTextField txtSoGhe = new JTextField(15);
+	    JComboBox<LoaiGhe> cbLoaiGhe = new JComboBox<>(LoaiGhe.values());
+	
+
+	    Component[] inputs = {txtMaGhe, txtPhongChieu, txtSoGhe, cbLoaiGhe};
+
+	    for (int i = 0; i < labels.length; i++) {
+	        gbc.gridx = 0; gbc.gridy = i;
+	        addDialog.add(labels[i], gbc);
+
+	        gbc.gridx = 1;
+	        addDialog.add(inputs[i], gbc);
+	    }
+
+	    JButton btnXacNhan = new JButton("Xác Nhận");
+	    JButton btnHuy = new JButton("Hủy");
+
+	    btnXacNhan.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+	    btnHuy.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+	    btnXacNhan.setBackground(new Color(25, 159, 254));
+	    btnHuy.setBackground(Color.RED);
+
+	    btnXacNhan.setForeground(Color.WHITE);
+	    btnHuy.setForeground(Color.WHITE);
+
+	    btnXacNhan.setFont(labelFont);
+	    btnHuy.setFont(labelFont);
+
+	    JPanel buttonPanel = new JPanel();
+	    buttonPanel.add(btnXacNhan);
+	    buttonPanel.add(btnHuy);
+
+	    gbc.gridx = 0;
+	    gbc.gridy = labels.length;
+	    gbc.gridwidth = 2;
+	    gbc.anchor = GridBagConstraints.CENTER;
+	    addDialog.add(buttonPanel, gbc);
+
+	    // 👉 Action Xác Nhận
+	    btnXacNhan.addActionListener(e -> {
+	        try {
+	            String maGhe = txtMaGhe.getText().trim();
+	            String phongChieu = txtPhongChieu.getText().trim();
+	            String soGhe = txtSoGhe.getText().trim();
+	            LoaiGhe loaiGhe = (LoaiGhe) cbLoaiGhe.getSelectedItem();
+	            
+
+	            if (!validData(maGhe, phongChieu,  soGhe, loaiGhe)) {
+	                return;
+	            }
+	            PhongChieu pc = new PhongChieu(phongChieu, "Tên phòng"); // hoặc có thể lấy tên thật từ DB
+	            Ghe ghe = new Ghe(maGhe, pc, soGhe, loaiGhe);
+
+	            Ghe_GIANG_DAO gheDAO = new Ghe_GIANG_DAO();
+	            if (gheDAO.themGhe(ghe)) {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm ghế thành công!");
+	                loadGheToTable();
+	                addDialog.dispose();
+	            } else {
+	                JOptionPane.showMessageDialog(addDialog, "Thêm ghế thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (Exception ex) {
+	            JOptionPane.showMessageDialog(addDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            ex.printStackTrace();
+	        }
+	    });
+
+	    btnHuy.addActionListener(e -> addDialog.dispose());
+
+	    addDialog.setVisible(true);
+	}
+	private void UpdateGheDialog(Ghe gheUpdate) {
+	    final JDialog updateDialog = new JDialog(new JDialog((Frame) null, "Cập nhật ghế", true));
+	    updateDialog.setSize(500, 400);
+	    updateDialog.setLayout(new GridBagLayout());
+	    updateDialog.setLocationRelativeTo(null);
+
+	    GridBagConstraints gbc = new GridBagConstraints();
+	    gbc.insets = new Insets(5, 5, 5, 5);
+	    gbc.anchor = GridBagConstraints.WEST;
+	    
+	    JLabel lblMaGhe = new JLabel("Mã ghế:");
+	    JLabel lblPhongChieu = new JLabel("Phòng chiếu (Mã phòng):");
+	    JLabel lblSoGhe = new JLabel("Số ghế:");
+	    JLabel lblLoaiGhe = new JLabel("Loại ghế:");
+	   
+
+	    Font labelFont = new Font("Times New Roman", Font.BOLD, 15);
+	    JLabel[] labels = {lblMaGhe, lblPhongChieu, lblSoGhe, lblLoaiGhe};
+	    for (JLabel lbl : labels) lbl.setFont(labelFont);
+
+	    // Mã ghế (không cho sửa)
+	    JTextField txtMaGhe = new JTextField(15);
+	    txtMaGhe.setText(gheUpdate.getMaGhe());
+	    txtMaGhe.setEditable(false);
+
+	    // Phòng chiếu (cho sửa nếu cần)
+	    JTextField txtPhongChieu = new JTextField(15);
+	    txtPhongChieu.setText(gheUpdate.getPhongChieu().getMaPhong());
+
+	    // Số ghế
+	    JTextField txtSoGhe = new JTextField(15);
+	    txtSoGhe.setText(gheUpdate.getSoGhe());
+
+	    // Loại ghế
+	    JComboBox<LoaiGhe> cbLoaiGhe = new JComboBox<>(LoaiGhe.values());
+	    cbLoaiGhe.setSelectedItem(gheUpdate.getLoaiGhe());
+
+	    JButton btnCapNhat = new JButton("Cập Nhật");
+	    btnCapNhat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnCapNhat.setBackground(new java.awt.Color(25, 159, 254));
+	    btnCapNhat.setForeground(new java.awt.Color(255, 255, 255));
+	    btnCapNhat.setFont(new Font("Times New Roman", Font.BOLD, 15));
+
+	    JButton btnHuy = new JButton("Hủy");
+	    btnHuy.setCursor(new Cursor(Cursor.HAND_CURSOR));
+	    btnHuy.setBackground(new java.awt.Color(255, 0, 0));
+	    btnHuy.setForeground(new java.awt.Color(255, 255, 255));
+	    btnHuy.setFont(new Font("Times New Roman", Font.BOLD, 15));
+	    
+	    Component[] inputs = {txtMaGhe, txtPhongChieu, txtSoGhe, cbLoaiGhe};
+
+	    for (int i = 0; i < labels.length; i++) {
+	        gbc.gridx = 0; gbc.gridy = i;
+	        updateDialog.add(labels[i], gbc);
+
+	        gbc.gridx = 1;
+	        updateDialog.add(inputs[i], gbc);
+	    }
+	    // Buttons
+	    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+	    buttonPanel.add(btnCapNhat);
+	    buttonPanel.add(btnHuy);
+
+	    gbc.gridx = 0;
+	    gbc.gridy = labels.length;
+	    gbc.gridwidth = 2;
+	    gbc.anchor = GridBagConstraints.CENTER;
+	    gbc.fill = GridBagConstraints.NONE;
+	    gbc.weightx = 0;
+	    updateDialog.add(buttonPanel, gbc);
+	    
+	    btnCapNhat.addActionListener(e -> {
+	        try {
+	            // Lấy dữ liệu nhập từ các trường
+	            String maGhe = txtMaGhe.getText().trim();
+	            String phongChieu = txtPhongChieu.getText().trim();
+	            String soGhe = txtSoGhe.getText().trim();
+	            LoaiGhe loaiGhe = (LoaiGhe) cbLoaiGhe.getSelectedItem();
+	            
+
+	            // Kiểm tra các giá trị đầu vào
+	            if (!validData(maGhe, phongChieu, soGhe, loaiGhe)) {
+	                return;
+	            }
+
+	            // Kiểm tra xem mã phòng có tồn tại không
+	            PhongChieu_DAO phongChieuDAO = new PhongChieu_DAO();
+	            PhongChieu phongChieuObj = phongChieuDAO.getPhongByMaPhong(phongChieu);
+	            if (phongChieuObj == null) {
+	                JOptionPane.showMessageDialog(updateDialog, "Mã phòng không tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	                return;
+	            }
+
+	            // Cập nhật thông tin ghế
+	            gheUpdate.setMaGhe(maGhe);
+	            gheUpdate.setPhongChieu(phongChieuObj);  // Sửa lại, không phải là chuỗi nữa
+	            gheUpdate.setSoGhe(soGhe);
+	            gheUpdate.setLoaiGhe(loaiGhe);
+	        
+	            // Cập nhật dữ liệu vào cơ sở dữ liệu
+	            Ghe_GIANG_DAO gheDAO = new Ghe_GIANG_DAO();
+
+	            if (gheDAO.capNhatGhe(gheUpdate)) {
+	                JOptionPane.showMessageDialog(updateDialog, "Cập nhật ghế thành công!");
+	                loadGheToTable(); // Tải lại dữ liệu ghế lên bảng
+	                updateDialog.dispose(); // Đóng dialog sau khi cập nhật thành công
+	            } else {
+	                JOptionPane.showMessageDialog(updateDialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            }
+	        } catch (NumberFormatException ex) {
+	            JOptionPane.showMessageDialog(updateDialog, "Giá trị nhập vào không hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+	        } catch (Exception ex) {
+	            JOptionPane.showMessageDialog(updateDialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            ex.printStackTrace();
+	        }
+	    });
+
+	    btnHuy.addActionListener(e -> updateDialog.dispose());
+
+	    updateDialog.setVisible(true);
+	}
+
+ 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel btnCapNhat;
     private javax.swing.JPanel btnThemGhe;
@@ -223,7 +545,7 @@ public class Ghe_GUI extends javax.swing.JPanel {
     private javax.swing.JLabel lbCapNhat;
     private javax.swing.JLabel lbThemGhe;
     private javax.swing.JLabel lbXoa;
-    private javax.swing.JTable tbNhanVien;
+    private javax.swing.JTable tbGhe;
     private javax.swing.JLabel titleGhe;
     // End of variables declaration//GEN-END:variables
 }

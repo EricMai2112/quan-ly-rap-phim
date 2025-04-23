@@ -11,6 +11,14 @@ public class NhanVien {
 	private String cccd;
 	private VaiTro vaiTro;
 	
+	public NhanVien() {
+		
+	}
+	
+public NhanVien(String maNHanVien) {
+	this.maNHanVien = maNHanVien;
+	}
+	
 	public NhanVien(String maNHanVien, String hoTen, Date ngaySinh, String soDienThoai, String cccd, VaiTro vaiTro) {
 		super();
 		this.maNHanVien = maNHanVien;

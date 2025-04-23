@@ -39,6 +39,28 @@ public class PhongChieu_DAO {
         return list;
     }
 
+    public PhongChieu getPhongByMaPhong(String maPhong) {
+        PhongChieu phongChieu = null;
+        
+        // Kết nối đến cơ sở dữ liệu và thực hiện truy vấn
+        String sql = "SELECT * FROM PhongChieu WHERE maPhong = ?";
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, maPhong);  // Gán giá trị cho tham số trong câu lệnh SQL
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // Nếu có dữ liệu, tạo đối tượng PhongChieu từ kết quả truy vấn
+                phongChieu = new PhongChieu();
+                phongChieu.setMaPhong(rs.getString("maPhong"));
+                // Thiết lập các thuộc tính khác của PhongChieu (nếu cần)
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return phongChieu;
+    }
+
     /**
      * Thêm mới một phòng chiếu
      */
@@ -118,5 +140,4 @@ public class PhongChieu_DAO {
         }
         return null;
     }
-
 }

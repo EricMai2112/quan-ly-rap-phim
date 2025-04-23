@@ -188,4 +188,7 @@ public class LichChieu_DAO {
         }
         return null;
     }
+
+public class LichChieu_DAO {
+
 }
