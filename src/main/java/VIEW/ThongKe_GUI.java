@@ -94,7 +94,7 @@ public class ThongKe_GUI extends javax.swing.JPanel {
         txtNgayKetThuc.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
 
         cboNam.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        cboNam.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Năm 2024", "Năm 2023", " " }));
+        cboNam.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Năm 2025", "Năm 2024", " " }));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel1.setText("Từ");

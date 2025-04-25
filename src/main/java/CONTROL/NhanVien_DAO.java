@@ -74,6 +74,26 @@ public class NhanVien_DAO {
 
 	    return null;
 	}
+<<<<<<< Updated upstream
+=======
+	
+	// Sinh mã NV mới
+		public String generateMaNhanVien() {
+			Connection con = connectDB.getConnection();
+		    String prefix = "NV";
+		    String sql = "SELECT TOP 1 maNhanVien FROM NhanVien WHERE maNhanVien LIKE 'NV%' ORDER BY maNhanVien DESC";
+		    try (PreparedStatement stmt = con.prepareStatement(sql);
+		         ResultSet rs = stmt.executeQuery()) {
+		        if (rs.next()) {
+		            String last = rs.getString(1); // e.g. "NV012"
+		            int num = Integer.parseInt(last.substring(2));
+		            return prefix + String.format("%03d", num+1);
+		        }
+		    } catch (SQLException e) { e.printStackTrace(); }
+		    return prefix + "001";
+		}
+
+>>>>>>> Stashed changes
 
 	public boolean themNhanVien(NhanVien nhanVien) {
 	    String sql = "INSERT INTO NhanVien (maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro) VALUES (?, ?, ?, ?, ?, ?)";
