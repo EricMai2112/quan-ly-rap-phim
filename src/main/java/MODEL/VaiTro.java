@@ -6,7 +6,6 @@ public enum VaiTro {
 
     private final String dbValue;
     VaiTro(String dbValue) { this.dbValue = dbValue; }
-    public String getDbValue() { return dbValue; }
 
     @Override
     public String toString() {

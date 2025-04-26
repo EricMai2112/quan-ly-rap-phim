@@ -74,9 +74,7 @@ public class NhanVien_DAO {
 
 	    return null;
 	}
-<<<<<<< Updated upstream
-=======
-	
+
 	// Sinh mã NV mới
 		public String generateMaNhanVien() {
 			Connection con = connectDB.getConnection();
@@ -93,7 +91,6 @@ public class NhanVien_DAO {
 		    return prefix + "001";
 		}
 
->>>>>>> Stashed changes
 
 	public boolean themNhanVien(NhanVien nhanVien) {
 	    String sql = "INSERT INTO NhanVien (maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro) VALUES (?, ?, ?, ?, ?, ?)";

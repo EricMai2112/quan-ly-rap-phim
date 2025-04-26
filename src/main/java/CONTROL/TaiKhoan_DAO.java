@@ -8,9 +8,9 @@ import java.sql.SQLException;
 
 public class TaiKhoan_DAO {
     private static final String URL = 
-        "jdbc:sqlserver://localhost:1433;databaseName=QuanLyRapChieuPhim;encrypt=true;trustServerCertificate=true";
+        "jdbc:sqlserver://localhost:1434;databaseName=QuanLyRapChieuPhim;encrypt=true;trustServerCertificate=true";
     private static final String USER = "sa";
-    private static final String PASS = "sapassword";
+    private static final String PASS = "123";
 
     /**
      * Kiểm tra đăng nhập

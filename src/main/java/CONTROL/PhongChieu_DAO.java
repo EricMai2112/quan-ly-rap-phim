@@ -140,8 +140,4 @@ public class PhongChieu_DAO {
         }
         return null;
     }
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 }
