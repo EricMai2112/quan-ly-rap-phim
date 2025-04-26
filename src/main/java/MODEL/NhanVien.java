@@ -29,6 +29,10 @@ public NhanVien(String maNHanVien) {
 		this.vaiTro = vaiTro;
 	}
 	
+	public NhanVien() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public String getMaNHanVien() {
 		return maNHanVien;
 	}

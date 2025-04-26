@@ -1,19 +1,16 @@
-
 package MODEL;
 
 public enum VaiTro {
-    THU_NGAN("Thu ngan"), QUAN_LY("Quan ly");
-    
-    private String vaiTro;
-    
+    QUAN_LY("Quản lý"),
+    THU_NGAN("Thu ngân");
 
-	private VaiTro(String vaiTro) {
-		this.vaiTro = vaiTro;
-	}
+    private final String dbValue;
+    VaiTro(String dbValue) { this.dbValue = dbValue; }
+    public String getDbValue() { return dbValue; }
 
-	@Override
+    @Override
     public String toString() {
-        return vaiTro;
+        return dbValue;
     }
 	 public String getDbValue() {
 	        return this.name(); // trả về đúng giá trị THU_NGAN, QUAN_LY cho database

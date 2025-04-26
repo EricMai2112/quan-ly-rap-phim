@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ConnectDB;
 
 import java.sql.Connection;
@@ -19,9 +15,9 @@ public class ConnectDB {
 	public static Connection getConnection() {
         Connection connection = null;
         try {
-        	String url = "jdbc:sqlserver://localhost:1433;databaseName=QuanLyRapChieuPhim;encrypt=false";
+        	String url = "jdbc:sqlserver://localhost:1433;databaseName=QuanLyRapChieuPhim;encrypt=true;trustServerCertificate=true;";
             String username = "sa";
-            String password = "123";
+            String password = "sapassword";
             connection = DriverManager.getConnection(url, username, password);
         } catch (SQLException e) {
             e.printStackTrace();

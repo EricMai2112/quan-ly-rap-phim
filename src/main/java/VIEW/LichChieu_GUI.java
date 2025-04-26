@@ -4,49 +4,374 @@
  */
 package VIEW;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.DecimalFormat;
+import CONTROL.LichChieu_DAO;
+import CONTROL.PhongChieu_DAO;
+import CONTROL.Phim_DAO;
+import MODEL.LichChieu;
+import MODEL.PhongChieu;
+import MODEL.Phim;
+
+import com.toedter.calendar.JDateChooser;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.DefaultListCellRenderer;
+import java.awt.*;
+import java.awt.event.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-
-
-/**
- *
- * @author Admin
- */
-public class LichChieu_GUI extends javax.swing.JPanel {
-	private DefaultTableModel originalModel;
-	// Tạo một Timer với thời gian lặp lại là 5000ms (5 giây)
+public class LichChieu_GUI extends JPanel {
+    private DefaultTableModel originalModel;
+    private final LichChieu_DAO lcDAO = new LichChieu_DAO();
     private Timer timer;
 
-    /**
-     * Creates new form DanhSachDatPhong
-     */
     public LichChieu_GUI() {
         initComponents();
-
         updateHeader();
-        
         setDefaultDate();
-        
-        
         setWidthColumns();
-
-        
+        loadData();
+        addEventHandlers();
     }
+
+    /** Load dữ liệu từ DAO vào bảng */
+    private void loadData() {
+        DefaultTableModel model = (DefaultTableModel) tbDanhSachDatPhong.getModel();
+        model.setRowCount(0);
+        List<LichChieu> list = LichChieu_DAO.getAllLichChieu();
+        SimpleDateFormat dfDate = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
+        for (LichChieu lc : list) {
+            model.addRow(new Object[]{
+                lc.getMaLichChieu(),
+                lc.getPhongChieu().getTenPhong(),
+                lc.getPhim().getTenPhim(),
+                dfDate.format(lc.getNgayChieu()),
+                dfTime.format(lc.getGioBatDau()),
+                dfTime.format(lc.getGioKetThuc())
+            });
+        }
+        originalModel = model;
+    }
+
+    /** Gắn sự kiện cho các nút Thêm, Cập nhật, Xóa và Tìm kiếm */
+    private void addEventHandlers() {
+        // --- Thêm lịch chiếu mới ---
+        btnThem.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
+
+                panel.add(new JLabel("Chọn phòng:"));
+                JComboBox<PhongChieu> cbPhong = new JComboBox<>();
+                for (PhongChieu pc : PhongChieu_DAO.getAllPhongChieu()) {
+                    cbPhong.addItem(pc);
+                }
+                cbPhong.setRenderer(new DefaultListCellRenderer() {
+                    @Override
+                    public Component getListCellRendererComponent(JList<?> list,
+                                                                  Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                        if (value instanceof PhongChieu) {
+                            setText(((PhongChieu) value).getTenPhong());
+                        }
+                        return this;
+                    }
+                });
+                panel.add(cbPhong);
+
+                panel.add(new JLabel("Chọn phim:"));
+                JComboBox<Phim> cbPhim = new JComboBox<>();
+                for (Phim p : new Phim_DAO().getAllPhim()) {
+                    cbPhim.addItem(p);
+                }
+                cbPhim.setRenderer(new DefaultListCellRenderer() {
+                    @Override
+                    public Component getListCellRendererComponent(JList<?> list,
+                                                                  Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                        if (value instanceof Phim) {
+                            setText(((Phim) value).getTenPhim());
+                        }
+                        return this;
+                    }
+                });
+                panel.add(cbPhim);
+
+                panel.add(new JLabel("Ngày chiếu:"));
+                JDateChooser dcNgay = new JDateChooser(new Date(), "dd/MM/yyyy");
+                panel.add(dcNgay);
+
+                panel.add(new JLabel("Giờ BD:"));
+                JSpinner spnGioBD = new JSpinner(new SpinnerDateModel());
+                spnGioBD.setEditor(new JSpinner.DateEditor(spnGioBD, "HH:mm"));
+                panel.add(spnGioBD);
+
+                panel.add(new JLabel("Giờ KT:"));
+                JSpinner spnGioKT = new JSpinner(new SpinnerDateModel());
+                spnGioKT.setEditor(new JSpinner.DateEditor(spnGioKT, "HH:mm"));
+                panel.add(spnGioKT);
+
+                int result = JOptionPane.showConfirmDialog(
+                    LichChieu_GUI.this, panel,
+                    "Nhập lịch chiếu mới",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+                );
+                if (result == JOptionPane.OK_OPTION) {
+                    PhongChieu selPhong = (PhongChieu) cbPhong.getSelectedItem();
+                    Phim selPhim       = (Phim) cbPhim.getSelectedItem();
+                    java.sql.Date ngay  = new java.sql.Date(dcNgay.getDate().getTime());
+                    Date bd             = (Date) spnGioBD.getValue();
+                    java.sql.Time gioBD = new java.sql.Time(bd.getTime());
+                    Date kt             = (Date) spnGioKT.getValue();
+                    java.sql.Time gioKT = new java.sql.Time(kt.getTime());
+
+                    LichChieu lc = new LichChieu(
+                        null,
+                        selPhong,
+                        selPhim,
+                        new Date(ngay.getTime()),
+                        new Date(gioBD.getTime()),
+                        new Date(gioKT.getTime())
+                    );
+                    boolean ok = LichChieu_DAO.addLichChieu(lc);
+                    if (ok) {
+                        JOptionPane.showMessageDialog(
+                            LichChieu_GUI.this,
+                            "Thêm thành công",
+                            "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+                        loadData();
+                    } else {
+                        JOptionPane.showMessageDialog(
+                            LichChieu_GUI.this,
+                            "Thêm thất bại",
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+                }
+            }
+        });
+
+        // --- Cập nhật lịch chiếu ---
+        btnCapNhat.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = tbDanhSachDatPhong.getSelectedRow();
+                if (row < 0) {
+                    JOptionPane.showMessageDialog(
+                        LichChieu_GUI.this,
+                        "Vui lòng chọn dòng để cập nhật",
+                        "Thông báo",
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+                String maLC = tbDanhSachDatPhong.getValueAt(row, 0).toString();
+                LichChieu existing = LichChieu_DAO.getLichChieuById(maLC);
+
+                JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
+                panel.add(new JLabel("Chọn phòng:"));
+                JComboBox<PhongChieu> cbPhong = new JComboBox<>();
+                for (PhongChieu pc : PhongChieu_DAO.getAllPhongChieu()) {
+                    cbPhong.addItem(pc);
+                }
+                cbPhong.setRenderer(new DefaultListCellRenderer() {
+                    @Override
+                    public Component getListCellRendererComponent(JList<?> list,
+                                                                  Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                        if (value instanceof PhongChieu) {
+                            setText(((PhongChieu) value).getTenPhong());
+                        }
+                        return this;
+                    }
+                });
+                cbPhong.setSelectedItem(existing.getPhongChieu());
+                panel.add(cbPhong);
+
+                panel.add(new JLabel("Chọn phim:"));
+                JComboBox<Phim> cbPhim = new JComboBox<>();
+                for (Phim p : new Phim_DAO().getAllPhim()) {
+                    cbPhim.addItem(p);
+                }
+                cbPhim.setRenderer(new DefaultListCellRenderer() {
+                    @Override
+                    public Component getListCellRendererComponent(JList<?> list,
+                                                                  Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                        if (value instanceof Phim) {
+                            setText(((Phim) value).getTenPhim());
+                        }
+                        return this;
+                    }
+                });
+                cbPhim.setSelectedItem(existing.getPhim());
+                panel.add(cbPhim);
+
+                panel.add(new JLabel("Ngày chiếu:"));
+                JDateChooser dcNgay = new JDateChooser(existing.getNgayChieu(), "dd/MM/yyyy");
+                panel.add(dcNgay);
+
+                panel.add(new JLabel("Giờ BD:"));
+                SpinnerDateModel mBD = new SpinnerDateModel(existing.getGioBatDau(), null, null, Calendar.MINUTE);
+                JSpinner spnBD = new JSpinner(mBD);
+                spnBD.setEditor(new JSpinner.DateEditor(spnBD, "HH:mm"));
+                panel.add(spnBD);
+
+                panel.add(new JLabel("Giờ KT:"));
+                SpinnerDateModel mKT = new SpinnerDateModel(existing.getGioKetThuc(), null, null, Calendar.MINUTE);
+                JSpinner spnKT = new JSpinner(mKT);
+                spnKT.setEditor(new JSpinner.DateEditor(spnKT, "HH:mm"));
+                panel.add(spnKT);
+
+                int result = JOptionPane.showConfirmDialog(
+                    LichChieu_GUI.this, panel,
+                    "Cập nhật lịch chiếu",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+                );
+                if (result == JOptionPane.OK_OPTION) {
+                    PhongChieu selPhong = (PhongChieu) cbPhong.getSelectedItem();
+                    Phim selPhim       = (Phim) cbPhim.getSelectedItem();
+                    java.sql.Date ngay  = new java.sql.Date(dcNgay.getDate().getTime());
+                    Date bd             = (Date) spnBD.getValue();
+                    java.sql.Time gioBD = new java.sql.Time(bd.getTime());
+                    Date kt             = (Date) spnKT.getValue();
+                    java.sql.Time gioKT = new java.sql.Time(kt.getTime());
+
+                    existing.setPhongChieu(selPhong);
+                    existing.setPhim(selPhim);
+                    existing.setNgayChieu(new Date(ngay.getTime()));
+                    existing.setGioBatDau(new Date(gioBD.getTime()));
+                    existing.setGioKetThuc(new Date(gioKT.getTime()));
+
+                    boolean ok = LichChieu_DAO.updateLichChieu(existing);
+                    if (ok) {
+                        JOptionPane.showMessageDialog(
+                            LichChieu_GUI.this,
+                            "Cập nhật thành công",
+                            "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+                        loadData();
+                    } else {
+                        JOptionPane.showMessageDialog(
+                            LichChieu_GUI.this,
+                            "Cập nhật thất bại",
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+                }
+            }
+        });
+
+        // --- Xóa lịch chiếu ---
+        btnHuy.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = tbDanhSachDatPhong.getSelectedRow();
+                if (row < 0) {
+                    JOptionPane.showMessageDialog(
+                        LichChieu_GUI.this,
+                        "Vui lòng chọn dòng để xóa",
+                        "Thông báo",
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+                String maLC = tbDanhSachDatPhong.getValueAt(row, 0).toString();
+                int confirm = JOptionPane.showConfirmDialog(
+                    LichChieu_GUI.this,
+                    "Bạn có chắc muốn xóa " + maLC + "?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION
+                );
+                if (confirm == JOptionPane.YES_OPTION) {
+                    boolean ok = LichChieu_DAO.deleteLichChieu(maLC);
+                    if (ok) {
+                        JOptionPane.showMessageDialog(
+                            LichChieu_GUI.this,
+                            "Xóa thành công",
+                            "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+                        loadData();
+                    } else {
+                        JOptionPane.showMessageDialog(
+                            LichChieu_GUI.this,
+                            "Xóa thất bại",
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    }
+                }
+            }
+        });
+
+     // --- Tìm kiếm theo từ khóa, khoảng ngày và trạng thái ---
+        btnTimKiem.addActionListener(e -> {
+            String raw = txtTimKiem.getText().trim();
+            String keyword = raw.equals("Nhập tên phim") ? "" : raw.toLowerCase();
+            String status  = (String) cboTrangThai.getSelectedItem();
+            Date from      = txtTuNgayChieu.getDate();
+            Date to        = txtDenNgayChieu.getDate();
+            Date now       = new Date();
+
+            if (keyword.isEmpty() && "Tất cả".equals(status)) {
+                loadData();
+                return;
+            }
+
+            DefaultTableModel filtered = new DefaultTableModel(
+                new String[]{ "Mã LC","Phòng","Phim","Ngày chiếu","Giờ BD","Giờ KT" }, 0
+            );
+            SimpleDateFormat dfDate = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
+
+            for (LichChieu lc : lcDAO.getAllLichChieu()) {
+                String phim  = lc.getPhim().getTenPhim().toLowerCase();
+                String phong = lc.getPhongChieu().getTenPhong().toLowerCase();
+                boolean matchText = phim.contains(keyword) || phong.contains(keyword);
+                Date showDate = lc.getNgayChieu();
+                boolean inRange = !showDate.before(from) && !showDate.after(to);
+                boolean matchStatus;
+                if ("Chưa nhận".equals(status)) {
+                    matchStatus = showDate.after(now);
+                } else if ("Đã nhận".equals(status)) {
+                    matchStatus = !showDate.after(now);
+                } else {
+                    matchStatus = true;
+                }
+                if (matchText && inRange && matchStatus) {
+                    filtered.addRow(new Object[]{
+                        lc.getMaLichChieu(),
+                        lc.getPhongChieu().getTenPhong(),
+                        lc.getPhim().getTenPhim(),
+                        dfDate.format(showDate),
+                        dfTime.format(lc.getGioBatDau()),
+                        dfTime.format(lc.getGioKetThuc())
+                    });
+                }
+            }
+
+            tbDanhSachDatPhong.setModel(filtered);
+            setWidthColumns();
+            if (filtered.getRowCount() == 0) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy lịch chiếu phù hợp!");
+            }
+        });
+    }
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -86,23 +411,22 @@ public class LichChieu_GUI extends javax.swing.JPanel {
         titleLichChieu.setText("Lịch chiếu phim");
 
         tbDanhSachDatPhong.setModel(new javax.swing.table.DefaultTableModel(
-            new Object[][] {},  // Bắt đầu với dữ liệu rỗng
-            new String[] { "Mã khách hàng", "Tên khách hàng", "CCCD", "Phái", "Ngày sinh", "Điện thoại" }
-        ) {
-            Class<?>[] types = new Class<?>[] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class,
-                java.lang.String.class, java.lang.String.class, java.lang.String.class
-            };
+        	    new Object[][] {},
+        	    new String[] { "Mã LC", "Phòng", "Phim", "Ngày chiếu", "Giờ BD", "Giờ KT" }
+        	) {
+        	    Class<?>[] types = new Class<?>[] {
+        	        String.class, String.class, String.class,
+        	        String.class, String.class, String.class
+        	    };
+        	    public Class<?> getColumnClass(int columnIndex) {
+        	        return types[columnIndex];
+        	    }
+        	    @Override
+        	    public boolean isCellEditable(int row, int column) {
+        	        return false;
+        	    }
+        	});
 
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;  // Không cho phép chỉnh sửa dữ liệu trong bảng
-            }
-        });
         tbDanhSachDatPhong.setRowHeight(40);
         jScrollPane1.setViewportView(tbDanhSachDatPhong);
 
@@ -284,13 +608,18 @@ public class LichChieu_GUI extends javax.swing.JPanel {
     }//GEN-LAST:event_btnTimKiemActionPerformed
                                     
 
-    private void txtTimKiemFocusGained(java.awt.event.FocusEvent evt) {
-        txtTimKiem.setText("");
-        txtTimKiem.setForeground(Color.BLACK);
+    private void txtTimKiemFocusGained(FocusEvent evt) {
+        if ("Nhập tên phim".equals(txtTimKiem.getText())) {
+            txtTimKiem.setText("");
+            txtTimKiem.setForeground(Color.BLACK);
+        }
     }
 
-    private void txtTimKiemFocusLost(java.awt.event.FocusEvent evt) {
-        txtTimKiem.setForeground(Color.decode("#909090"));
+    private void txtTimKiemFocusLost(FocusEvent evt) {
+        if (txtTimKiem.getText().trim().isEmpty()) {
+            txtTimKiem.setForeground(Color.decode("#909090"));
+            txtTimKiem.setText("Nhập tên phim");
+        }
     }
 
     private void txtTimKiemActionPerformed(java.awt.event.ActionEvent evt) {

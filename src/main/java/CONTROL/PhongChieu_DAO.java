@@ -38,6 +38,7 @@ public class PhongChieu_DAO {
 
         return list;
     }
+
     public PhongChieu getPhongByMaPhong(String maPhong) {
         PhongChieu phongChieu = null;
         
@@ -119,4 +120,28 @@ public class PhongChieu_DAO {
 
         return false;
     }
+    
+    public static PhongChieu getPhongChieuById(String maPhong) {
+        String sql = "SELECT maPhong, tenPhong, soLuongNguoi FROM PhongChieu WHERE maPhong = ?";
+        try (Connection conn = connectDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, maPhong);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new PhongChieu(
+                      rs.getString("maPhong"),
+                      rs.getString("tenPhong"),
+                      rs.getInt("soLuongNguoi")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 }

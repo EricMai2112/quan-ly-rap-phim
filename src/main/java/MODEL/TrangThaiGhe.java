@@ -1,4 +1,3 @@
-
 package MODEL;
 
 public enum TrangThaiGhe {

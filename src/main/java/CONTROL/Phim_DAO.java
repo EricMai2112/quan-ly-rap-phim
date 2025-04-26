@@ -7,12 +7,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
 import ConnectDB.ConnectDB;
 import MODEL.Phim;
 import MODEL.TrangThaiPhim;
 
 public class Phim_DAO {
-	private final ConnectDB connectDB = new ConnectDB();
+	private final static ConnectDB connectDB = new ConnectDB();
 	
 	public List<Phim> getAllPhim() {
 	    List<Phim> listPhim = new ArrayList<>();
@@ -55,13 +56,38 @@ public class Phim_DAO {
 	        stmt.setInt(3, phim.getThoiLuong());
 	        stmt.setString(4, phim.getTheLoai());
 	        stmt.setString(5, phim.getTrangThaiPhim().name());
-	        stmt.setString(6, phim.getHinhAnh()); // Lưu link ảnh
+	        stmt.setString(6, phim.getHinhAnh());
 
 	        return stmt.executeUpdate() > 0;
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
 	    return false;
+	}
+
+	public static Phim getPhimById(String maPhim) {
+	    String sql = "SELECT maPhim, tenPhim, thoiLuong, theLoai, trangThaiPhim, hinhAnh FROM Phim WHERE maPhim = ?";
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        
+	        stmt.setString(1, maPhim);
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                Phim phim = new Phim();
+	                phim.setMaPhim(rs.getString("maPhim"));
+	                phim.setTenPhim(rs.getString("tenPhim"));
+	                phim.setThoiLuong(rs.getInt("thoiLuong"));
+	                phim.setTheLoai(rs.getString("theLoai"));
+	                TrangThaiPhim tt = TrangThaiPhim.valueOf(rs.getString("trangThaiPhim"));
+	                phim.setTrangThaiPhim(tt);
+	                phim.setHinhAnh(rs.getString("hinhAnh"));
+	                return phim;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return null;
 	}
 
 	public boolean deletePhim(String maPhim) {
@@ -96,4 +122,30 @@ public class Phim_DAO {
         }
         return false;
     }
+	
+	public static Phim getPhimById(String maPhim) {
+	    String sql = "SELECT maPhim, tenPhim, thoiLuong, theLoai, trangThaiPhim, hinhAnh FROM Phim WHERE maPhim = ?";
+	    try (Connection conn = connectDB.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        
+	        stmt.setString(1, maPhim);
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                Phim phim = new Phim();
+	                phim.setMaPhim(rs.getString("maPhim"));
+	                phim.setTenPhim(rs.getString("tenPhim"));
+	                phim.setThoiLuong(rs.getInt("thoiLuong"));
+	                phim.setTheLoai(rs.getString("theLoai"));
+	                TrangThaiPhim tt = TrangThaiPhim.valueOf(rs.getString("trangThaiPhim"));
+	                phim.setTrangThaiPhim(tt);
+	                phim.setHinhAnh(rs.getString("hinhAnh"));
+	                return phim;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return null;
+	}
+
 }

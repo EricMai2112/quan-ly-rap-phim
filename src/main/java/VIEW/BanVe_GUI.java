@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFile/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package VIEW;
 
 import java.awt.BorderLayout;
@@ -61,7 +57,7 @@ import CONTROL.Ghe_DAO;
 import CONTROL.GiaoDich_DAO;
 import CONTROL.KhachHang_DAO;
 import CONTROL.KhachHang_DAO1;
-import CONTROL.LichChieu2_DAO;
+import CONTROL.LichChieu_DAO;
 import CONTROL.Phim_DAO;
 import CONTROL.SanPhamDichVu_DAO;
 import CONTROL.Ve_DAO;
@@ -263,7 +259,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
     }
     
     private void hienDialogLichChieu(Phim phim) {
-        List<LichChieu> lichChieuList = new LichChieu2_DAO().getLichChieuByPhim(phim.getMaPhim());
+        List<LichChieu> lichChieuList = new LichChieu_DAO().getLichChieuByPhim(phim.getMaPhim());
         if (lichChieuList.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không có lịch chiếu cho phim này.");
             return;

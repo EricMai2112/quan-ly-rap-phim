@@ -4,12 +4,12 @@ public class PhongChieu {
 	private String maPhong;
 	private String tenPhong;
 	private int soLuongNguoi;
-	
 
 	public PhongChieu(String maPhong, String tenPhong) {
 		this.maPhong = maPhong;
 		this.tenPhong = tenPhong;
 	}
+
 	public PhongChieu(String maPhong, String tenPhong, int soLuongNguoi) {
 		super();
 		this.maPhong = maPhong;

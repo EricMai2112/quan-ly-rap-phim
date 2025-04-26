@@ -31,7 +31,7 @@ public class NhanVien_DAO {
 				nhanVien.setNgaySinh(resultSet.getDate("ngaySinh"));
 				nhanVien.setSoDienThoai(resultSet.getString("soDienThoai"));
 				nhanVien.setCccd(resultSet.getString("cccd"));
-				
+
 				String vaiTroStr = resultSet.getString("vaiTro");
 				VaiTro vaiTro = VaiTro.valueOf(vaiTroStr);
 				nhanVien.setVaiTro(vaiTro);	
@@ -44,6 +44,7 @@ public class NhanVien_DAO {
 
 		return listNhanVien;
 	}
+
 	public NhanVien getNhanVienByMa(String maNhanVien) {
 	    String sql = "SELECT * FROM NhanVien WHERE maNhanVien = ?";
 	    try (Connection conn = connectDB.getConnection();
@@ -71,68 +72,80 @@ public class NhanVien_DAO {
 	        e.printStackTrace();
 	    }
 
-	    return null; // Không tìm thấy hoặc xảy ra lỗi
+	    return null;
 	}
+<<<<<<< Updated upstream
+=======
+	
+	// Sinh mã NV mới
+		public String generateMaNhanVien() {
+			Connection con = connectDB.getConnection();
+		    String prefix = "NV";
+		    String sql = "SELECT TOP 1 maNhanVien FROM NhanVien WHERE maNhanVien LIKE 'NV%' ORDER BY maNhanVien DESC";
+		    try (PreparedStatement stmt = con.prepareStatement(sql);
+		         ResultSet rs = stmt.executeQuery()) {
+		        if (rs.next()) {
+		            String last = rs.getString(1); // e.g. "NV012"
+		            int num = Integer.parseInt(last.substring(2));
+		            return prefix + String.format("%03d", num+1);
+		        }
+		    } catch (SQLException e) { e.printStackTrace(); }
+		    return prefix + "001";
+		}
+
+>>>>>>> Stashed changes
+
 	public boolean themNhanVien(NhanVien nhanVien) {
 	    String sql = "INSERT INTO NhanVien (maNhanVien, hoTen, ngaySinh, soDienThoai, cccd, vaiTro) VALUES (?, ?, ?, ?, ?, ?)";
 	    try (Connection conn = connectDB.getConnection();
 	         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-	        // Thiết lập các tham số cho PreparedStatement
 	        ps.setString(1, nhanVien.getMaNHanVien());
 	        ps.setString(2, nhanVien.getHoTen());
-	        ps.setDate(3, new java.sql.Date(nhanVien.getNgaySinh().getTime())); // Chuyển từ java.util.Date sang java.sql.Date
+	        ps.setDate(3, new java.sql.Date(nhanVien.getNgaySinh().getTime()));
 	        ps.setString(4, nhanVien.getSoDienThoai());
 	        ps.setString(5, nhanVien.getCccd());
-	        //ps.setString(6, nhanVien.getVaiTro().toString()); // Vai trò là Enum, chuyển thành String
 	        ps.setString(6, nhanVien.getVaiTro().getDbValue());
-	        // Thực thi câu lệnh
+	        
 	        int rowsAffected = ps.executeUpdate();
-	        return rowsAffected > 0; // Trả về true nếu đã thêm thành công
+	        return rowsAffected > 0;
 	    } catch (SQLException e) {
 	        e.printStackTrace();
-	        return false; // Nếu có lỗi, trả về false
+	        return false;
 	    }
 	}
+
 	public boolean capNhatNhanVien(NhanVien nhanVien) {
 	    String sql = "UPDATE NhanVien SET hoTen = ?, ngaySinh = ?, soDienThoai = ?, cccd = ?, vaiTro = ? WHERE maNhanVien = ?";
 	    try (Connection conn = connectDB.getConnection();
 	         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-	        // Thiết lập các tham số cho PreparedStatement
 	        ps.setString(1, nhanVien.getHoTen());
-	        ps.setDate(2, new java.sql.Date(nhanVien.getNgaySinh().getTime())); // Chuyển từ java.util.Date sang java.sql.Date
+	        ps.setDate(2, new java.sql.Date(nhanVien.getNgaySinh().getTime()));
 	        ps.setString(3, nhanVien.getSoDienThoai());
 	        ps.setString(4, nhanVien.getCccd());
-	        ps.setString(5, nhanVien.getVaiTro().name()); // Vai trò là Enum, chuyển thành String
-	        ps.setString(6, nhanVien.getMaNHanVien()); // Mã nhân viên là điều kiện để cập nhật
+	        ps.setString(5, nhanVien.getVaiTro().name());
+	        ps.setString(6, nhanVien.getMaNHanVien());
 
-	        // Thực thi câu lệnh
 	        int rowsAffected = ps.executeUpdate();
-	        return rowsAffected > 0; // Trả về true nếu đã cập nhật thành công
+	        return rowsAffected > 0;
 	    } catch (SQLException e) {
 	        e.printStackTrace();
-	        return false; // Nếu có lỗi, trả về false
+	        return false;
 	    }
 	}
+
 	public boolean xoaNhanVien(String maNhanVien) {
 	    String sql = "DELETE FROM NhanVien WHERE maNhanVien = ?";
 	    try (Connection conn = connectDB.getConnection();
 	         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-	        // Thiết lập tham số cho PreparedStatement
 	        ps.setString(1, maNhanVien);
-
-	        // Thực thi câu lệnh
 	        int rowsAffected = ps.executeUpdate();
-	        return rowsAffected > 0; // Trả về true nếu đã xóa thành công
+	        return rowsAffected > 0;
 	    } catch (SQLException e) {
 	        e.printStackTrace();
-	        return false; // Nếu có lỗi, trả về false
+	        return false;
 	    }
 	}
-
-
-
-
 }

@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +12,6 @@ import ConnectDB.ConnectDB;
 import MODEL.GiaoDich;
 import MODEL.KhachHang;
 import MODEL.NhanVien;
-import MODEL.SanPham;
 
 public class GiaoDich_DAO {
     private final ConnectDB connectDB = new ConnectDB();
@@ -50,7 +48,7 @@ public class GiaoDich_DAO {
 
         return list;
     }
-    
+
     public boolean themGiaoDich(GiaoDich giaoDich) {
         String sql = "INSERT INTO GiaoDich (maGiaoDich, tongTien, thoiGianGiaoDich, nhanVien, khachHang) " +
                      "VALUES (?, ?, ?, ?, ?)";
@@ -68,6 +66,7 @@ public class GiaoDich_DAO {
             return false;
         }
     }
+
     public GiaoDich findGiaoDichByMa(String maGiaoDich) {
         String sql = "SELECT * FROM GiaoDich WHERE maGiaoDich = ?";
         try (Connection conn = connectDB.getConnection();
@@ -76,8 +75,7 @@ public class GiaoDich_DAO {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                // Create a GiaoDich object with the retrieved data
-            	GiaoDich giaoDich = new GiaoDich();
+                GiaoDich giaoDich = new GiaoDich();
                 giaoDich.setMaGiaoDich(rs.getString("maGiaoDich"));
                 giaoDich.setTongTien(rs.getDouble("tongTien"));
                 Timestamp timestamp = rs.getTimestamp("thoiGianGiaoDich");
@@ -87,13 +85,11 @@ public class GiaoDich_DAO {
                     giaoDich.setThoiGianGiaoDich(null);
                 }
 
-                // Fetch NhanVien and KhachHang (assuming they are stored as foreign keys)
-                String maNhanVien = rs.getString("NhanVien");
+                String maNhanVien = rs.getString("nhanVien");
                 String maKhachHang = rs.getString("khachHang");
 
-                // You might need to fetch NhanVien and KhachHang objects from their respective DAOs
-                NhanVien nhanVien = new NhanVien_DAO().getNhanVienByMa(maNhanVien); // Assuming you have this method
-                KhachHang khachHang = new KhachHang_DAO().getKhachHangByMa(maKhachHang); // Assuming you have this method
+                NhanVien nhanVien = nhanVienDAO.getNhanVienByMa(maNhanVien);
+                KhachHang khachHang = khachHangDAO.getKhachHangByMa(maKhachHang);
 
                 giaoDich.setNhanVien(nhanVien);
                 giaoDich.setKhachHang(khachHang);
@@ -103,6 +99,6 @@ public class GiaoDich_DAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; // Return null if no transaction is found
+        return null;
     }
 }

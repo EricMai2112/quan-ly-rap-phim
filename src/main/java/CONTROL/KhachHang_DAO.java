@@ -55,6 +55,7 @@ public class KhachHang_DAO {
 		}
 		return null;
 	}
+
 	public boolean addKhachHang(KhachHang khachHang) {
 	       String sql = "INSERT INTO KhachHang (maKhachHang, tenKhachHang, soDienThoai, email) VALUES (?, ?, ?, ?)";
 
@@ -108,4 +109,5 @@ public class KhachHang_DAO {
         }
         return false;
     }
+
 }
