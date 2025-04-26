@@ -1,8 +1,8 @@
+
 package VIEW;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dialog;
@@ -16,20 +16,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
-import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -37,25 +36,20 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
 
 import com.toedter.calendar.JDateChooser;
 
 import CONTROL.ChiTietGiaoDich_DAO;
 import CONTROL.Ghe_DAO;
 import CONTROL.GiaoDich_DAO;
-import CONTROL.KhachHang_DAO;
 import CONTROL.KhachHang_DAO1;
 import CONTROL.LichChieu_DAO;
 import CONTROL.Phim_DAO;
@@ -80,12 +74,12 @@ import MODEL.Ve;
  * @author Admin
  */
 public class BanVe_GUI extends javax.swing.JPanel {
-	private JPanel panelMain;
-	private static BanVe_GUI instance;
+    private JPanel panelMain;
+    private static BanVe_GUI instance;
 
     JDateChooser txtNgayCheckIn = new com.toedter.calendar.JDateChooser();
     JDateChooser txtNgayCheckOut = new com.toedter.calendar.JDateChooser();
-    
+
     /**
      * Creates new form Phong_GUI
      */
@@ -95,33 +89,29 @@ public class BanVe_GUI extends javax.swing.JPanel {
         }
         return instance;
     }
-    
+
     public BanVe_GUI() {
-        
         initComponents();
         loadAndDisplayPhimCards();
-
+        addDateChangeListeners(); // Thêm sự kiện cho các ô ngày
     }
-    
 
     private void initComponents() {
-    	
-    	JPanel mainContainer = new JPanel();
+        JPanel mainContainer = new JPanel();
         mainContainer.setLayout(new BorderLayout());
         JPanel headerPanel = new JPanel();
 
-        
-        headerPanel.setBackground(Color.white);        
+        headerPanel.setBackground(Color.white);
         headerPanel.setLayout(new BorderLayout());
         headerPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
-        
-     // Thêm lọc ngày tháng năm
+
+        // Thêm lọc ngày tháng năm
         Calendar calendar = Calendar.getInstance();
         JPanel panelLocNgay = new JPanel();
         JLabel lbLocTu = new JLabel("Từ");
         lbLocTu.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		txtNgayCheckIn.setDateFormatString("dd/MM/yyyy");
-		txtNgayCheckOut.setDateFormatString("dd/MM/yyyy");
+        txtNgayCheckIn.setDateFormatString("dd/MM/yyyy");
+        txtNgayCheckOut.setDateFormatString("dd/MM/yyyy");
 
         // Ngày Check-in là ngày hiện tại
         java.util.Date checkInDate = calendar.getTime();
@@ -138,49 +128,89 @@ public class BanVe_GUI extends javax.swing.JPanel {
         panelLocNgay.add(txtNgayCheckOut);
         panelLocNgay.setBackground(Color.white);
 
-
-
-        
         JLabel lblTitle = new JLabel("Danh sách phim");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         headerPanel.add(panelLocNgay, BorderLayout.WEST);
-        //Panel bên phải
+
+        // Panel bên phải
         JPanel rightPanel = new JPanel();
         rightPanel.setBackground(Color.white);
         rightPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-   
 
         // Thêm rightPanel vào bên phải của headerPanel
         headerPanel.add(rightPanel, BorderLayout.EAST);
+
         // Tạo panel chính chứa các card phòng
-        panelMain = new JPanel(new GridLayout(0, 4, 10, 10)); // 4 cột, khoảng cách 10px
+        panelMain = new JPanel(new GridLayout(0, 4, 10, 10));
         panelMain.setBackground(Color.white);
-        
+
         JScrollPane scrollPane = new JScrollPane(panelMain);
 
-        
         mainContainer.add(headerPanel, BorderLayout.NORTH);
         mainContainer.add(scrollPane, BorderLayout.CENTER);
-        
+
         // Cấu hình giao diện chính
         setLayout(new BorderLayout());
         add(mainContainer, BorderLayout.CENTER);
 
         setSize(800, 600);
-
     }
-    
+
+    private void addDateChangeListeners() {
+        // Thêm sự kiện thay đổi ngày cho txtNgayCheckIn và txtNgayCheckOut
+        txtNgayCheckIn.getDateEditor().addPropertyChangeListener("date", evt -> loadAndDisplayPhimCards());
+        txtNgayCheckOut.getDateEditor().addPropertyChangeListener("date", evt -> loadAndDisplayPhimCards());
+    }
 
     public void loadAndDisplayPhimCards() {
         Phim_DAO phimDAO = new Phim_DAO();
+        LichChieu_DAO lichChieuDAO = new LichChieu_DAO();
         List<Phim> listPhim = phimDAO.getAllPhim();
+        List<LichChieu> lichChieuList = lichChieuDAO.getAllLichChieu();
 
+        // Lấy ngày từ txtNgayCheckIn và txtNgayCheckOut
+        java.util.Date checkInDate = txtNgayCheckIn.getDate();
+        java.util.Date checkOutDate = txtNgayCheckOut.getDate();
+
+        // Lọc các lịch chiếu trong khoảng thời gian
+        List<LichChieu> filteredLichChieu = lichChieuList;
+        if (checkInDate != null) {
+            filteredLichChieu = filteredLichChieu.stream().filter(lc -> {
+                java.util.Date ngayChieu = lc.getNgayChieu();
+                return !ngayChieu.before(checkInDate);
+            }).collect(Collectors.toList());
+        }
+        if (checkOutDate != null) {
+            // Thêm 1 ngày vào checkOutDate để bao gồm cả ngày được chọn
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(checkOutDate);
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            java.util.Date endOfCheckOutDate = calendar.getTime();
+
+            filteredLichChieu = filteredLichChieu.stream().filter(lc -> {
+                java.util.Date ngayChieu = lc.getNgayChieu();
+                return ngayChieu.before(endOfCheckOutDate);
+            }).collect(Collectors.toList());
+        }
+
+        // Lấy danh sách mã phim từ các lịch chiếu đã lọc
+        List<String> maPhimList = filteredLichChieu.stream()
+            .map(lc -> lc.getPhim().getMaPhim())
+            .distinct()
+            .collect(Collectors.toList());
+
+        // Lọc danh sách phim chỉ giữ lại các phim có mã trong maPhimList
+        List<Phim> filteredPhimList = listPhim.stream()
+            .filter(phim -> maPhimList.contains(phim.getMaPhim()))
+            .collect(Collectors.toList());
+
+        // Hiển thị danh sách phim đã lọc
         panelMain.removeAll();
 
         JPanel cardsPanel = new JPanel(new GridLayout(0, 4, 10, 10));
         cardsPanel.setBackground(Color.white);
 
-        for (Phim phim : listPhim) {
+        for (Phim phim : filteredPhimList) {
             JPanel card = createPhimCard(phim);
             cardsPanel.add(card);
         }
@@ -197,7 +227,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
         panelMain.repaint();
     }
 
-
     private JPanel createPhimCard(Phim phim) {
         JPanel card = new JPanel();
         card.setLayout(new BorderLayout());
@@ -207,7 +236,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
         String hinhAnh = phim.getHinhAnh();
         JLabel imageLabel;
-        
+
         try {
             if (hinhAnh != null && !hinhAnh.trim().isEmpty()) {
                 imageLabel = new JLabel(new ImageIcon(new java.net.URL(hinhAnh)));
@@ -234,8 +263,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
         JLabel durationLabel = new JLabel("Thời lượng: " + phim.getThoiLuong() + " phút");
         durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        
-        JPanel pStatus = new JPanel();
 
         JLabel statusLabel = new JLabel("Trạng thái: " + phim.getTrangThaiPhim());
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -245,23 +272,47 @@ public class BanVe_GUI extends javax.swing.JPanel {
         infoPanel.add(durationLabel);
         infoPanel.add(statusLabel);
         card.add(infoPanel, BorderLayout.SOUTH);
-        
+
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         card.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                hienDialogLichChieu(phim); // Mở dialog chọn lịch chiếu tương ứng phim
+                hienDialogLichChieu(phim);
             }
         });
 
-
         return card;
     }
-    
+
     private void hienDialogLichChieu(Phim phim) {
-        List<LichChieu> lichChieuList = new LichChieu_DAO().getLichChieuByPhim(phim.getMaPhim());
-        if (lichChieuList.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không có lịch chiếu cho phim này.");
+        LichChieu_DAO lichChieuDAO = new LichChieu_DAO();
+        List<LichChieu> lichChieuList = lichChieuDAO.getLichChieuByPhim(phim.getMaPhim());
+
+        // Lọc lịch chiếu theo ngày được chọn
+        java.util.Date checkInDate = txtNgayCheckIn.getDate();
+        java.util.Date checkOutDate = txtNgayCheckOut.getDate();
+
+        List<LichChieu> filteredLichChieu = lichChieuList;
+        if (checkInDate != null) {
+            filteredLichChieu = filteredLichChieu.stream().filter(lc -> {
+                java.util.Date ngayChieu = lc.getNgayChieu();
+                return !ngayChieu.before(checkInDate);
+            }).collect(Collectors.toList());
+        }
+        if (checkOutDate != null) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(checkOutDate);
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            java.util.Date endOfCheckOutDate = calendar.getTime();
+
+            filteredLichChieu = filteredLichChieu.stream().filter(lc -> {
+                java.util.Date ngayChieu = lc.getNgayChieu();
+                return ngayChieu.before(endOfCheckOutDate);
+            }).collect(Collectors.toList());
+        }
+
+        if (filteredLichChieu.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có lịch chiếu cho phim này trong khoảng thời gian được chọn.");
             return;
         }
 
@@ -271,7 +322,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
         dialog.setLayout(new BorderLayout());
 
         JPanel listPanel = new JPanel(new GridLayout(0, 1, 10, 10));
-        for (LichChieu lc : lichChieuList) {
+        for (LichChieu lc : filteredLichChieu) {
             String ngay = new SimpleDateFormat("dd/MM/yyyy").format(lc.getNgayChieu());
             String gio = new SimpleDateFormat("HH:mm").format(lc.getGioBatDau());
             String phong = lc.getPhongChieu().getTenPhong();
@@ -384,7 +435,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
         btnLamMoi.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnLamMoi.setBackground(new java.awt.Color(25, 159, 254));
         btnLamMoi.setForeground(new java.awt.Color(255, 255, 255));
-        btnLamMoi.setFont(new Font("Time new Romans", Font.BOLD, 15));
+        btnLamMoi.setFont(new Font("Times New Roman", Font.BOLD, 15));
         btnLamMoi.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnLamMoi.addActionListener(e -> {
             panelGhe.removeAll();
@@ -427,7 +478,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
         btnThanhToan.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnThanhToan.setBackground(new java.awt.Color(25, 159, 254));
         btnThanhToan.setForeground(new java.awt.Color(255, 255, 255));
-        btnThanhToan.setFont(new Font("Time new Romans", Font.BOLD, 15));
+        btnThanhToan.setFont(new Font("Times New Roman", Font.BOLD, 15));
         btnThanhToan.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnThanhToan.addActionListener(e -> {
             List<Ghe> gheDaChon = new ArrayList<>();
@@ -539,23 +590,23 @@ public class BanVe_GUI extends javax.swing.JPanel {
 
             // Làm mới giao diện sau khi đặt vé thành công
             JOptionPane.showMessageDialog(dialog, "Thanh toán thành công!");
-         // Xuất file PDF
+            // Xuất file PDF
             ExportFile exportFile = new ExportFile();
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
             exportFile.exportTicketInvoiceToPDF(
-                giaoDich, 
-                new KhachHang(maKhachHang, hoTen, sdt, email), 
-                veList, 
-                spDaChon, 
-                tongTien, 
-                lichChieu.getPhim().getTenPhim(), 
-                dateFormat.format(lichChieu.getNgayChieu()), 
-                timeFormat.format(lichChieu.getGioBatDau()), 
+                giaoDich,
+                new KhachHang(maKhachHang, hoTen, sdt, email),
+                veList,
+                spDaChon,
+                tongTien,
+                lichChieu.getPhim().getTenPhim(),
+                dateFormat.format(lichChieu.getNgayChieu()),
+                timeFormat.format(lichChieu.getGioBatDau()),
                 lichChieu.getPhongChieu().getTenPhong()
             );
-            panelGhe.removeAll(); // Xóa các ghế cũ
-            mapButtonToGhe.clear(); // Xóa map cũ
+            panelGhe.removeAll();
+            mapButtonToGhe.clear();
             for (Ghe ghe : danhSachGhe) {
                 JButton btnGhe = new JButton(ghe.getSoGhe());
                 TrangThaiGhe trangThai = gheDAO.getTrangThaiGhe(ghe.getMaGhe(), lichChieu.getMaLichChieu());
@@ -598,7 +649,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
             lblTongTien.setText("Tổng tiền: 0 VNĐ");
 
             // Không đóng dialog để người dùng có thể tiếp tục đặt ghế
-            // dialog.dispose();
         });
 
         panelPhai.add(panelSanPham);
@@ -626,7 +676,6 @@ public class BanVe_GUI extends javax.swing.JPanel {
             if (rs.next()) {
                 String maxId = rs.getString("maxId");
                 if (maxId != null) {
-                    // Giả sử mã có dạng GD001, GD002, ...
                     int number = Integer.parseInt(maxId.replace("GD", "")) + 1;
                     return "GD" + String.format("%03d", number);
                 }
@@ -634,11 +683,10 @@ public class BanVe_GUI extends javax.swing.JPanel {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return "GD001"; // Nếu không có giao dịch nào, bắt đầu từ GD001
+        return "GD001";
     }
-    
-    
-    private void updateTongTien(Map<JButton, Ghe> mapButtonToGhe, List<JCheckBox> checkboxSanPham, 
+
+    private void updateTongTien(Map<JButton, Ghe> mapButtonToGhe, List<JCheckBox> checkboxSanPham,
                                JLabel lblTongTien, DecimalFormat decimalFormat) {
         double tongTien = 0;
 
@@ -664,11 +712,7 @@ public class BanVe_GUI extends javax.swing.JPanel {
         lblTongTien.setText("Tổng tiền: " + decimalFormat.format(tongTien));
     }
 
-
-    
-    
-		
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration - do not modify
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JDialog jDialog1;
@@ -866,5 +910,5 @@ public class BanVe_GUI extends javax.swing.JPanel {
     private javax.swing.JPanel panel202;
     private javax.swing.JPanel panel203;
     private javax.swing.JPanel panel204;
-    // End of variables declaration//GEN-END:variables
+    // End of variables declaration
 }

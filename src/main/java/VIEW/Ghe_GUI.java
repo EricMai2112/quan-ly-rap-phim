@@ -81,11 +81,11 @@ public class Ghe_GUI extends javax.swing.JPanel {
         titleGhe = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbGhe = new javax.swing.JTable();
-        btnXoa = new javax.swing.JPanel();
+        btnXoa = new RoundedPanel(20);
         lbXoa = new javax.swing.JLabel();
-        btnCapNhat = new javax.swing.JPanel();
+        btnCapNhat = new RoundedPanel(20);
         lbCapNhat = new javax.swing.JLabel();
-        btnThemGhe = new javax.swing.JPanel();
+        btnThemGhe = new RoundedPanel(20);
         lbThemGhe = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout());

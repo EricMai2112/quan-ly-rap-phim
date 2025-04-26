@@ -83,11 +83,11 @@ public class NhanVien_GUI extends javax.swing.JPanel {
         titleKhachHang = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbNhanVien = new javax.swing.JTable();
-        btnXoa = new javax.swing.JPanel();
+        btnXoa = new RoundedPanel(20);
         lbXoa = new javax.swing.JLabel();
-        btnCapNhat = new javax.swing.JPanel();
+        btnCapNhat = new RoundedPanel(20);
         lbCapNhat = new javax.swing.JLabel();
-        btnThemNhanvien = new javax.swing.JPanel();
+        btnThemNhanvien = new RoundedPanel(20);
         lbThemNhanVien = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout());

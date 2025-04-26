@@ -386,11 +386,11 @@ public class LichChieu_GUI extends JPanel {
         titleLichChieu = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbDanhSachDatPhong = new javax.swing.JTable();
-        btnHuy = new javax.swing.JPanel();
+        btnHuy = new RoundedPanel(20);
         jLabel1 = new javax.swing.JLabel();
-        btnCapNhat = new javax.swing.JPanel();
+        btnCapNhat = new RoundedPanel(20);
         jLabel2 = new javax.swing.JLabel();
-        btnThem = new javax.swing.JPanel();
+        btnThem = new RoundedPanel(20);
         jLabel3 = new javax.swing.JLabel();
         txtTimKiem = new javax.swing.JTextField();
         btnTimKiem = new javax.swing.JButton();
@@ -486,7 +486,7 @@ public class LichChieu_GUI extends JPanel {
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 
-        jLabel3.setText("Nhận Phòng");
+        jLabel3.setText("Thêm lịch");
 
         javax.swing.GroupLayout btnThemLayout = new javax.swing.GroupLayout(btnThem);
         btnThem.setLayout(btnThemLayout);

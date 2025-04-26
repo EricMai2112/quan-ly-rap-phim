@@ -80,11 +80,11 @@ public class KhachHang_GUI extends javax.swing.JPanel {
         titleHoaDon = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbKhachHang = new javax.swing.JTable();
-        btnXoa = new javax.swing.JPanel();
+        btnXoa = new RoundedPanel(20);
         lbXoa = new javax.swing.JLabel();
-        btnCapNhat = new javax.swing.JPanel();
+        btnCapNhat = new RoundedPanel(20);
         lbCapNhat = new javax.swing.JLabel();
-        btnThemKhachHang = new javax.swing.JPanel();
+        btnThemKhachHang = new RoundedPanel(20);
         lbThemKhachHang = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout());

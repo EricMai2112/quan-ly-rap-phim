@@ -85,11 +85,11 @@ public class PhongChieu_GUI extends javax.swing.JPanel {
         titlePhongChieu = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbNhanVien = new javax.swing.JTable();
-        btnXoa = new javax.swing.JPanel();
+        btnXoa = new RoundedPanel(20);
         lbXoa = new javax.swing.JLabel();
-        btnCapNhat = new javax.swing.JPanel();
+        btnCapNhat = new RoundedPanel(20);
         lbCapNhat = new javax.swing.JLabel();
-        btnThemPhongChieu = new javax.swing.JPanel();
+        btnThemPhongChieu = new RoundedPanel(20);
         lbThemPhongChieu = new javax.swing.JLabel();
 
         setLayout(new java.awt.CardLayout());
