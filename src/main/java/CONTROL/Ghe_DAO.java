@@ -72,13 +72,11 @@ public class Ghe_DAO {
 	        ResultSet rs = stmt.executeQuery();
 	        if (rs.next()) {
 	            int count = rs.getInt(1);
-	            System.out.println("maGhe=" + maGhe + ", maLichChieu=" + maLichChieu + ", count=" + count);
 	            return count > 0 ? TrangThaiGhe.GHE_DAT : TrangThaiGhe.GHE_TRONG;
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
-	    System.out.println("Lỗi: Trả về mặc định GHE_TRONG cho maGhe=" + maGhe + ", maLichChieu=" + maLichChieu);
 	    return TrangThaiGhe.GHE_TRONG;
 	}
 }

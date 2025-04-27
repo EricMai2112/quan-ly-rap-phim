@@ -89,7 +89,6 @@ public class LichChieu_DAO {
                 String maPhong   = rs.getString("phongChieu");
                 String maPhim    = rs.getString("phim");
 
-                // Lấy đối tượng qua DAO riêng
                 PhongChieu phong = PhongChieu_DAO.getPhongChieuById(maPhong);
                 Phim phim         = Phim_DAO.getPhimById(maPhim);
 
